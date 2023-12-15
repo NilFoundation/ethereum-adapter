@@ -3,6 +3,7 @@ package jsonrpc
 import (
 	"context"
 	"fmt"
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 	"github.com/ledgerwatch/erigon-lib/common/hexutil"
 	"math/big"
 
@@ -16,7 +17,7 @@ import (
 )
 
 type GraphQLAPI interface {
-	GetBlockDetails(ctx context.Context, number rpc.BlockNumber) (map[string]interface{}, error)
+	GetBlockDetails(ctx context.Context, number rpc.BlockNumber, adapter replication_adapter.Adapter) (map[string]interface{}, error)
 	GetChainID(ctx context.Context) (*big.Int, error)
 }
 
@@ -47,7 +48,7 @@ func (api *GraphQLAPIImpl) GetChainID(ctx context.Context) (*big.Int, error) {
 	return response.ChainID, nil
 }
 
-func (api *GraphQLAPIImpl) GetBlockDetails(ctx context.Context, blockNumber rpc.BlockNumber) (map[string]interface{}, error) {
+func (api *GraphQLAPIImpl) GetBlockDetails(ctx context.Context, blockNumber rpc.BlockNumber, adapter replication_adapter.Adapter) (map[string]interface{}, error) {
 	tx, err := api.db.BeginRo(ctx)
 	if err != nil {
 		return nil, err
@@ -72,7 +73,7 @@ func (api *GraphQLAPIImpl) GetBlockDetails(ctx context.Context, blockNumber rpc.
 		return nil, err
 	}
 
-	receipts, err := api.getReceipts(ctx, tx, chainConfig, block, senders)
+	receipts, err := api.getReceipts(ctx, tx, chainConfig, block, senders, adapter)
 	if err != nil {
 		return nil, fmt.Errorf("getReceipts error: %w", err)
 	}

@@ -2,6 +2,7 @@ package state
 
 import (
 	"fmt"
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 	"github.com/ledgerwatch/erigon-lib/kv/dbutils"
 
 	"github.com/holiman/uint256"
@@ -83,7 +84,7 @@ func accountsEqual(a1, a2 *accounts.Account) bool {
 	return true
 }
 
-func (w *ChangeSetWriter) UpdateAccountData(address libcommon.Address, original, account *accounts.Account) error {
+func (w *ChangeSetWriter) UpdateAccountData(address libcommon.Address, original, account *accounts.Account, adapter replication_adapter.Adapter) error {
 	//fmt.Printf("balance,%x,%d\n", address, &account.Balance)
 	if !accountsEqual(original, account) || w.storageChanged[address] {
 		w.accountChanges[address] = originalAccountData(original, true /*omitHashes*/)
@@ -105,7 +106,7 @@ func (w *ChangeSetWriter) DeleteAccount(address libcommon.Address, original *acc
 	return nil
 }
 
-func (w *ChangeSetWriter) WriteAccountStorage(address libcommon.Address, incarnation uint64, key *libcommon.Hash, original, value *uint256.Int) error {
+func (w *ChangeSetWriter) WriteAccountStorage(address libcommon.Address, incarnation uint64, key *libcommon.Hash, original, value *uint256.Int, adapter replication_adapter.Adapter) error {
 	//fmt.Printf("storage,%x,%x,%x\n", address, *key, value.Bytes())
 	if *original == *value {
 		return nil

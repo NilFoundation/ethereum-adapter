@@ -2,6 +2,7 @@ package eth1
 
 import (
 	"context"
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 	"math/big"
 
 	"github.com/ledgerwatch/erigon-lib/chain"
@@ -225,7 +226,7 @@ func (e *EthereumExecutionModule) purgeBadChain(ctx context.Context, tx kv.RwTx,
 	return nil
 }
 
-func (e *EthereumExecutionModule) Start(ctx context.Context) {
+func (e *EthereumExecutionModule) Start(ctx context.Context, adapter replication_adapter.Adapter) {
 	e.semaphore.Acquire(ctx, 1)
 	defer e.semaphore.Release(1)
 	// Run the forkchoice

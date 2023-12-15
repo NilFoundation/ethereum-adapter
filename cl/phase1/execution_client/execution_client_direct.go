@@ -3,6 +3,7 @@ package execution_client
 import (
 	"context"
 	"fmt"
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 
 	libcommon "github.com/ledgerwatch/erigon-lib/common"
 	"github.com/ledgerwatch/erigon-lib/gointerfaces/execution"
@@ -52,7 +53,7 @@ func (cc *ExecutionClientDirect) NewPayload(payload *cltypes.Eth1Block, beaconPa
 	return
 }
 
-func (cc *ExecutionClientDirect) ForkChoiceUpdate(finalized libcommon.Hash, head libcommon.Hash) error {
+func (cc *ExecutionClientDirect) ForkChoiceUpdate(finalized libcommon.Hash, head libcommon.Hash, adapter replication_adapter.Adapter) error {
 	status, _, err := cc.chainRW.UpdateForkChoice(head, head, finalized)
 	if err != nil {
 		return fmt.Errorf("execution Client RPC failed to retrieve ForkChoiceUpdate response, err: %w", err)

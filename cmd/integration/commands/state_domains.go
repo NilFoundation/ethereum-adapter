@@ -243,7 +243,7 @@ func (rw *ReaderWrapper4) ReadAccountIncarnation(address libcommon.Address) (uin
 	return 0, nil
 }
 
-func (ww *WriterWrapper4) UpdateAccountData(address libcommon.Address, original, account *accounts.Account) error {
+func (ww *WriterWrapper4) UpdateAccountData(address libcommon.Address, original, account *accounts.Account, adapter replication_adapter.Adapter) error {
 	value := accounts.SerialiseV3(account)
 	if err := ww.w.UpdateAccountData(address.Bytes(), value); err != nil {
 		return err
@@ -265,8 +265,8 @@ func (ww *WriterWrapper4) DeleteAccount(address libcommon.Address, original *acc
 	return nil
 }
 
-func (ww *WriterWrapper4) WriteAccountStorage(address libcommon.Address, incarnation uint64, key *libcommon.Hash, original, value *uint256.Int) error {
-	if err := ww.w.WriteAccountStorage(address.Bytes(), key.Bytes(), value.Bytes()); err != nil {
+func (ww *WriterWrapper4) WriteAccountStorage(address libcommon.Address, incarnation uint64, key *libcommon.Hash, original, value *uint256.Int, adapter replication_adapter.Adapter) error {
+	if err := ww.w.WriteAccountStorage(address.Bytes(), key.Bytes(), value.Bytes(), adapter); err != nil {
 		return err
 	}
 	return nil

@@ -56,6 +56,7 @@ type NodeArgs struct {
 
 	NodeKey    *ecdsa.PrivateKey `arg:"-"`
 	NodeKeyHex string            `arg:"--nodekeyhex" json:"nodekeyhex,omitempty"`
+	Adapter    bool              `arg:"--adapter.enable" default:"false"`
 }
 
 func (node *NodeArgs) Configure(base NodeArgs, nodeNumber int) error {
@@ -108,6 +109,10 @@ func (node *NodeArgs) Configure(base NodeArgs, nodeNumber int) error {
 
 func (node *NodeArgs) GetName() string {
 	return node.Name
+}
+
+func (node *NodeArgs) IsAdapter() bool {
+	return node.Adapter
 }
 
 func (node *NodeArgs) ChainID() *big.Int {

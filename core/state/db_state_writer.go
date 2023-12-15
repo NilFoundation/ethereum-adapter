@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 	dbutils2 "github.com/ledgerwatch/erigon-lib/kv/dbutils"
 
 	"github.com/RoaringBitmap/roaring/roaring64"
@@ -61,8 +62,8 @@ func originalAccountData(original *accounts.Account, omitHashes bool) []byte {
 	return originalData
 }
 
-func (dsw *DbStateWriter) UpdateAccountData(address libcommon.Address, original, account *accounts.Account) error {
-	if err := dsw.csw.UpdateAccountData(address, original, account); err != nil {
+func (dsw *DbStateWriter) UpdateAccountData(address libcommon.Address, original, account *accounts.Account, adapter replication_adapter.Adapter) error {
+	if err := dsw.csw.UpdateAccountData(address, original, account, adapter); err != nil {
 		return err
 	}
 	addrHash, err := libcommon.HashData(address[:])
@@ -117,9 +118,9 @@ func (dsw *DbStateWriter) UpdateAccountCode(address libcommon.Address, incarnati
 	return nil
 }
 
-func (dsw *DbStateWriter) WriteAccountStorage(address libcommon.Address, incarnation uint64, key *libcommon.Hash, original, value *uint256.Int) error {
+func (dsw *DbStateWriter) WriteAccountStorage(address libcommon.Address, incarnation uint64, key *libcommon.Hash, original, value *uint256.Int, adapter replication_adapter.Adapter) error {
 	// We delegate here first to let the changeSetWrite make its own decision on whether to proceed in case *original == *value
-	if err := dsw.csw.WriteAccountStorage(address, incarnation, key, original, value); err != nil {
+	if err := dsw.csw.WriteAccountStorage(address, incarnation, key, original, value, adapter); err != nil {
 		return err
 	}
 	if *original == *value {

@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 	"math"
 	"math/bits"
 	"os"
@@ -985,7 +986,7 @@ func (a *Aggregator) DeleteAccount(addr []byte) error {
 	return e
 }
 
-func (a *Aggregator) WriteAccountStorage(addr, loc []byte, value []byte) error {
+func (a *Aggregator) WriteAccountStorage(addr, loc []byte, value []byte, adapter replication_adapter.Adapter) error {
 	composite := make([]byte, len(addr)+len(loc))
 	copy(composite, addr)
 	copy(composite[length.Addr:], loc)

@@ -29,7 +29,7 @@ func newMockEngine() execution_client.ExecutionEngine {
 	}
 }
 
-func (m *mockEngine) ForkChoiceUpdate(finalized libcommon.Hash, head libcommon.Hash) error {
+func (m *mockEngine) ForkChoiceUpdate(finalized libcommon.Hash, head libcommon.Hash, adapter replication_adapter.Adapter) error {
 	panic("unimplemented")
 }
 

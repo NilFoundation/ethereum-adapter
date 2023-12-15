@@ -2,6 +2,7 @@ package stagedsync
 
 import (
 	"context"
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 
 	"github.com/ledgerwatch/erigon-lib/gointerfaces/remote"
 	"github.com/ledgerwatch/erigon-lib/kv"
@@ -25,6 +26,7 @@ func MiningStages(
 	hashStateCfg HashStateCfg,
 	trieCfg TrieCfg,
 	finish MiningFinishCfg,
+	adapter replication_adapter.Adapter,
 ) []*Stage {
 	return []*Stage{
 		{
@@ -58,7 +60,7 @@ func MiningStages(
 			Forward: func(firstCycle bool, badBlockUnwind bool, s *StageState, u Unwinder, tx kv.RwTx, logger log.Logger) error {
 				//fmt.Println("SpawnMiningExecStage")
 				//defer fmt.Println("SpawnMiningExecStage", "DONE")
-				return SpawnMiningExecStage(s, tx, execCfg, ctx.Done(), logger)
+				return SpawnMiningExecStage(s, tx, execCfg, ctx.Done(), logger, adapter)
 			},
 			Unwind: func(firstCycle bool, u *UnwindState, s *StageState, tx kv.RwTx, logger log.Logger) error { return nil },
 			Prune:  func(firstCycle bool, u *PruneState, tx kv.RwTx, logger log.Logger) error { return nil },

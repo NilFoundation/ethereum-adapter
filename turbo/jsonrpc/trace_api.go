@@ -3,6 +3,7 @@ package jsonrpc
 import (
 	"context"
 	"encoding/json"
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 	"github.com/ledgerwatch/erigon-lib/common/hexutil"
 
 	jsoniter "github.com/json-iterator/go"
@@ -16,17 +17,17 @@ import (
 // TraceAPI RPC interface into tracing API
 type TraceAPI interface {
 	// Ad-hoc (see ./trace_adhoc.go)
-	ReplayBlockTransactions(ctx context.Context, blockNr rpc.BlockNumberOrHash, traceTypes []string, gasBailOut *bool) ([]*TraceCallResult, error)
-	ReplayTransaction(ctx context.Context, txHash libcommon.Hash, traceTypes []string, gasBailOut *bool) (*TraceCallResult, error)
-	Call(ctx context.Context, call TraceCallParam, types []string, blockNr *rpc.BlockNumberOrHash) (*TraceCallResult, error)
-	CallMany(ctx context.Context, calls json.RawMessage, blockNr *rpc.BlockNumberOrHash) ([]*TraceCallResult, error)
+	ReplayBlockTransactions(ctx context.Context, blockNr rpc.BlockNumberOrHash, traceTypes []string, gasBailOut *bool, adapter replication_adapter.Adapter) ([]*TraceCallResult, error)
+	ReplayTransaction(ctx context.Context, txHash libcommon.Hash, traceTypes []string, gasBailOut *bool, adapter replication_adapter.Adapter) (*TraceCallResult, error)
+	Call(ctx context.Context, call TraceCallParam, types []string, blockNr *rpc.BlockNumberOrHash, adapter replication_adapter.Adapter) (*TraceCallResult, error)
+	CallMany(ctx context.Context, calls json.RawMessage, blockNr *rpc.BlockNumberOrHash, adapter replication_adapter.Adapter) ([]*TraceCallResult, error)
 	RawTransaction(ctx context.Context, txHash libcommon.Hash, traceTypes []string) ([]interface{}, error)
 
 	// Filtering (see ./trace_filtering.go)
-	Transaction(ctx context.Context, txHash libcommon.Hash, gasBailOut *bool) (ParityTraces, error)
-	Get(ctx context.Context, txHash libcommon.Hash, txIndicies []hexutil.Uint64, gasBailOut *bool) (*ParityTrace, error)
-	Block(ctx context.Context, blockNr rpc.BlockNumber, gasBailOut *bool) (ParityTraces, error)
-	Filter(ctx context.Context, req TraceFilterRequest, gasBailOut *bool, stream *jsoniter.Stream) error
+	Transaction(ctx context.Context, txHash libcommon.Hash, gasBailOut *bool, adapter replication_adapter.Adapter) (ParityTraces, error)
+	Get(ctx context.Context, txHash libcommon.Hash, txIndicies []hexutil.Uint64, gasBailOut *bool, adapter replication_adapter.Adapter) (*ParityTrace, error)
+	Block(ctx context.Context, blockNr rpc.BlockNumber, gasBailOut *bool, adapter replication_adapter.Adapter) (ParityTraces, error)
+	Filter(ctx context.Context, req TraceFilterRequest, gasBailOut *bool, stream *jsoniter.Stream, adapter replication_adapter.Adapter) error
 }
 
 // TraceAPIImpl is implementation of the TraceAPI interface based on remote Db access

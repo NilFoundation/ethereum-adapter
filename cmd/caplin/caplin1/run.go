@@ -2,6 +2,7 @@ package caplin1
 
 import (
 	"context"
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 	"os"
 	"path"
 	"time"
@@ -80,7 +81,7 @@ func OpenCaplinDatabase(ctx context.Context,
 func RunCaplinPhase1(ctx context.Context, sentinel sentinel.SentinelClient, engine execution_client.ExecutionEngine,
 	beaconConfig *clparams.BeaconChainConfig, genesisConfig *clparams.GenesisConfig, state *state.CachingBeaconState,
 	caplinFreezer freezer.Freezer, dirs datadir.Dirs, cfg beacon.RouterConfiguration,
-	snDownloader proto_downloader.DownloaderClient, backfilling bool) error {
+	snDownloader proto_downloader.DownloaderClient, backfilling bool, adapter replication_adapter.Adapter) error {
 	rawDB := persistence.AferoRawBeaconBlockChainFromOsPath(beaconConfig, dirs.CaplinHistory)
 	beaconDB, db, err := OpenCaplinDatabase(ctx, db_config.DefaultDatabaseConfiguration, beaconConfig, rawDB, dirs.CaplinIndexing, engine, false)
 	if err != nil {
@@ -191,7 +192,7 @@ func RunCaplinPhase1(ctx context.Context, sentinel sentinel.SentinelClient, engi
 	tx.Rollback()
 
 	stageCfg := stages.ClStagesCfg(beaconRpc, antiq, genesisConfig, beaconConfig, state, engine, gossipManager, forkChoice, beaconDB, db, csn, dirs.Tmp, dbConfig, backfilling)
-	sync := stages.ConsensusClStages(ctx, stageCfg)
+	sync := stages.ConsensusClStages(ctx, stageCfg, adapter)
 
 	logger.Info("[Caplin] starting clstages loop")
 	err = sync.StartWithStage(ctx, "WaitForPeers", logger, stageCfg)

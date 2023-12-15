@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 	"github.com/ledgerwatch/erigon-lib/common/hexutil"
 	"math/big"
 	"time"
@@ -69,7 +70,7 @@ func blockHeaderOverride(blockCtx *evmtypes.BlockContext, blockOverride BlockOve
 	}
 }
 
-func (api *APIImpl) CallMany(ctx context.Context, bundles []Bundle, simulateContext StateContext, stateOverride *ethapi.StateOverrides, timeoutMilliSecondsPtr *int64) ([][]map[string]interface{}, error) {
+func (api *APIImpl) CallMany(ctx context.Context, bundles []Bundle, simulateContext StateContext, stateOverride *ethapi.StateOverrides, timeoutMilliSecondsPtr *int64, adapter replication_adapter.Adapter) ([][]map[string]interface{}, error) {
 	var (
 		hash               common.Hash
 		replayTransactions types.Transactions
@@ -218,8 +219,7 @@ func (api *APIImpl) CallMany(ctx context.Context, bundles []Bundle, simulateCont
 		if err != nil {
 			return nil, err
 		}
-
-		_ = st.FinalizeTx(rules, state.NewNoopWriter())
+		_ = st.FinalizeTx(rules, state.NewNoopWriter(), adapter)
 
 		// If the timer caused an abort, return an appropriate error message
 		if evm.Cancelled() {
@@ -279,7 +279,7 @@ func (api *APIImpl) CallMany(ctx context.Context, bundles []Bundle, simulateCont
 				return nil, err
 			}
 
-			_ = st.FinalizeTx(rules, state.NewNoopWriter())
+			_ = st.FinalizeTx(rules, state.NewNoopWriter(), adapter)
 
 			// If the timer caused an abort, return an appropriate error message
 			if evm.Cancelled() {

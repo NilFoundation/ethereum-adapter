@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 	"sort"
 
 	"github.com/ledgerwatch/erigon-lib/common"
@@ -24,7 +25,7 @@ type ContractCreatorData struct {
 	Creator common.Address `json:"creator"`
 }
 
-func (api *OtterscanAPIImpl) GetContractCreator(ctx context.Context, addr common.Address) (*ContractCreatorData, error) {
+func (api *OtterscanAPIImpl) GetContractCreator(ctx context.Context, addr common.Address, adapter replication_adapter.Adapter) (*ContractCreatorData, error) {
 	tx, err := api.db.BeginRo(ctx)
 	if err != nil {
 		return nil, err
@@ -169,7 +170,7 @@ func (api *OtterscanAPIImpl) GetContractCreator(ctx context.Context, addr common
 
 		// Trace block, find tx and contract creator
 		tracer := NewCreateTracer(ctx, addr)
-		if err := api.genericTracer(tx, ctx, bn, creationTxnID, txIndex, chainConfig, tracer); err != nil {
+		if err := api.genericTracer(tx, ctx, bn, creationTxnID, txIndex, chainConfig, tracer, adapter); err != nil {
 			return nil, err
 		}
 		return &ContractCreatorData{
@@ -288,7 +289,7 @@ func (api *OtterscanAPIImpl) GetContractCreator(ctx context.Context, addr common
 	}
 	// Trace block, find tx and contract creator
 	tracer := NewCreateTracer(ctx, addr)
-	if err := api.genericTracer(tx, ctx, blockFound, 0, 0, chainConfig, tracer); err != nil {
+	if err := api.genericTracer(tx, ctx, blockFound, 0, 0, chainConfig, tracer, adapter); err != nil {
 		return nil, err
 	}
 

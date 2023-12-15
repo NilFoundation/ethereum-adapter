@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 	"github.com/ledgerwatch/erigon-lib/common/hexutil"
 	"math/big"
 	"sync"
@@ -56,9 +57,9 @@ type EthAPI interface {
 	GetRawTransactionByHash(ctx context.Context, hash common.Hash) (hexutility.Bytes, error)
 
 	// Receipt related (see ./eth_receipts.go)
-	GetTransactionReceipt(ctx context.Context, hash common.Hash) (map[string]interface{}, error)
+	GetTransactionReceipt(ctx context.Context, hash common.Hash, adapter replication_adapter.Adapter) (map[string]interface{}, error)
 	GetLogs(ctx context.Context, crit ethFilters.FilterCriteria) (types.Logs, error)
-	GetBlockReceipts(ctx context.Context, numberOrHash rpc.BlockNumberOrHash) ([]map[string]interface{}, error)
+	GetBlockReceipts(ctx context.Context, numberOrHash rpc.BlockNumberOrHash, adapter replication_adapter.Adapter) ([]map[string]interface{}, error)
 
 	// Uncle related (see ./eth_uncles.go)
 	GetUncleByBlockNumberAndIndex(ctx context.Context, blockNr rpc.BlockNumber, index hexutil.Uint) (map[string]interface{}, error)

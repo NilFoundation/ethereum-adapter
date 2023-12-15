@@ -19,6 +19,7 @@ package state
 
 import (
 	"fmt"
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 	"sort"
 
 	"github.com/holiman/uint256"
@@ -304,6 +305,16 @@ func (sdb *IntraBlockState) AddBalance(addr libcommon.Address, amount *uint256.I
 	if sdb.trace {
 		fmt.Printf("AddBalance %x, %d\n", addr, amount)
 	}
+	//if addr.String() == "0xa94f5374Fce5edBC8E2a8697C15331677e6EbF0B" {
+	//	//	for i := 0; i < 20; i++ {
+	//	//		pc, file, line, ok := runtime.Caller(i)
+	//	//		if ok {
+	//	//			fmt.Printf("Called from %s, line #%d, func: %v\n",
+	//	//				file, line, runtime.FuncForPC(pc).Name())
+	//	//		}
+	//	//	}
+	//	fmt.Printf("ZERGPRINT: TxIndex%x, AddBalance %x, %d\n", sdb.txIndex, addr, amount)
+	//}
 	// If this account has not been read, add to the balance increment map
 	_, needAccount := sdb.stateObjects[addr]
 	if !needAccount && addr == ripemd && amount.IsZero() {
@@ -602,7 +613,7 @@ func (sdb *IntraBlockState) GetRefund() uint64 {
 	return sdb.refund
 }
 
-func updateAccount(EIP161Enabled bool, isAura bool, stateWriter StateWriter, addr libcommon.Address, stateObject *stateObject, isDirty bool) error {
+func updateAccount(EIP161Enabled bool, isAura bool, stateWriter StateWriter, addr libcommon.Address, stateObject *stateObject, isDirty bool, adapter replication_adapter.Adapter) error {
 	emptyRemoval := EIP161Enabled && stateObject.empty() && (!isAura || addr != SystemAddress)
 	if stateObject.selfdestructed || (isDirty && emptyRemoval) {
 		if err := stateWriter.DeleteAccount(addr, &stateObject.original); err != nil {
@@ -623,10 +634,10 @@ func updateAccount(EIP161Enabled bool, isAura bool, stateWriter StateWriter, add
 				return err
 			}
 		}
-		if err := stateObject.updateTrie(stateWriter); err != nil {
+		if err := stateObject.updateTrie(stateWriter, adapter); err != nil {
 			return err
 		}
-		if err := stateWriter.UpdateAccountData(addr, &stateObject.original, &stateObject.data); err != nil {
+		if err := stateWriter.UpdateAccountData(addr, &stateObject.original, &stateObject.data, adapter); err != nil {
 			return err
 		}
 	}
@@ -657,7 +668,7 @@ func printAccount(EIP161Enabled bool, addr libcommon.Address, stateObject *state
 }
 
 // FinalizeTx should be called after every transaction.
-func (sdb *IntraBlockState) FinalizeTx(chainRules *chain.Rules, stateWriter StateWriter) error {
+func (sdb *IntraBlockState) FinalizeTx(chainRules *chain.Rules, stateWriter StateWriter, adapter replication_adapter.Adapter) error {
 	for addr, bi := range sdb.balanceInc {
 		if !bi.transferred {
 			sdb.getStateObject(addr)
@@ -674,8 +685,7 @@ func (sdb *IntraBlockState) FinalizeTx(chainRules *chain.Rules, stateWriter Stat
 			// Thus, we can safely ignore it here
 			continue
 		}
-
-		if err := updateAccount(chainRules.IsSpuriousDragon, chainRules.IsAura, stateWriter, addr, so, true); err != nil {
+		if err := updateAccount(chainRules.IsSpuriousDragon, chainRules.IsAura, stateWriter, addr, so, true, adapter); err != nil {
 			return err
 		}
 		so.newlyCreated = false
@@ -688,13 +698,15 @@ func (sdb *IntraBlockState) FinalizeTx(chainRules *chain.Rules, stateWriter Stat
 
 // CommitBlock finalizes the state by removing the self destructed objects
 // and clears the journal as well as the refunds.
-func (sdb *IntraBlockState) CommitBlock(chainRules *chain.Rules, stateWriter StateWriter) error {
+func (sdb *IntraBlockState) CommitBlock(chainRules *chain.Rules, stateWriter StateWriter, adapter replication_adapter.Adapter) error {
 	for addr, bi := range sdb.balanceInc {
 		if !bi.transferred {
 			sdb.getStateObject(addr)
 		}
 	}
-	return sdb.MakeWriteSet(chainRules, stateWriter)
+	//node := devnet.CurrentNode(context.Background())
+	//fmt.Println(node)
+	return sdb.MakeWriteSet(chainRules, stateWriter, adapter)
 }
 
 func (sdb *IntraBlockState) BalanceIncreaseSet() map[libcommon.Address]uint256.Int {
@@ -707,13 +719,13 @@ func (sdb *IntraBlockState) BalanceIncreaseSet() map[libcommon.Address]uint256.I
 	return s
 }
 
-func (sdb *IntraBlockState) MakeWriteSet(chainRules *chain.Rules, stateWriter StateWriter) error {
+func (sdb *IntraBlockState) MakeWriteSet(chainRules *chain.Rules, stateWriter StateWriter, adapter replication_adapter.Adapter) error {
 	for addr := range sdb.journal.dirties {
 		sdb.stateObjectsDirty[addr] = struct{}{}
 	}
 	for addr, stateObject := range sdb.stateObjects {
 		_, isDirty := sdb.stateObjectsDirty[addr]
-		if err := updateAccount(chainRules.IsSpuriousDragon, chainRules.IsAura, stateWriter, addr, stateObject, isDirty); err != nil {
+		if err := updateAccount(chainRules.IsSpuriousDragon, chainRules.IsAura, stateWriter, addr, stateObject, isDirty, adapter); err != nil {
 			return err
 		}
 	}

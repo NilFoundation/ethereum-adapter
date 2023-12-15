@@ -2,6 +2,7 @@ package jsonrpc
 
 import (
 	"context"
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 
 	"github.com/ledgerwatch/erigon-lib/chain"
 	"github.com/ledgerwatch/erigon-lib/common"
@@ -22,7 +23,7 @@ type GenericTracer interface {
 	Found() bool
 }
 
-func (api *OtterscanAPIImpl) genericTracer(dbtx kv.Tx, ctx context.Context, blockNum, txnID uint64, txIndex int, chainConfig *chain.Config, tracer GenericTracer) error {
+func (api *OtterscanAPIImpl) genericTracer(dbtx kv.Tx, ctx context.Context, blockNum, txnID uint64, txIndex int, chainConfig *chain.Config, tracer GenericTracer, adapter replication_adapter.Adapter) error {
 	if api.historyV3(dbtx) {
 		ttx := dbtx.(kv.TemporalTx)
 		executor := txnExecutor(ttx, chainConfig, api.engine(), api._blockReader, tracer)
@@ -95,7 +96,7 @@ func (api *OtterscanAPIImpl) genericTracer(dbtx kv.Tx, ctx context.Context, bloc
 		if _, err := core.ApplyMessage(vmenv, msg, new(core.GasPool).AddGas(tx.GetGas()).AddBlobGas(tx.GetBlobGas()), true /* refunds */, false /* gasBailout */); err != nil {
 			return err
 		}
-		_ = ibs.FinalizeTx(rules, cachedWriter)
+		_ = ibs.FinalizeTx(rules, cachedWriter, adapter)
 
 		if tracer.Found() {
 			tracer.SetTransaction(tx)

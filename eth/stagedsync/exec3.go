@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -150,6 +151,7 @@ func ExecV3(ctx context.Context,
 	maxBlockNum uint64,
 	logger log.Logger,
 	initialCycle bool,
+	adapter replication_adapter.Adapter,
 ) error {
 	batchSize := cfg.batchSize
 	chainDb := cfg.db
@@ -245,7 +247,7 @@ func ExecV3(ctx context.Context,
 	rwsConsumed := make(chan struct{}, 1)
 	defer close(rwsConsumed)
 
-	execWorkers, applyWorker, rws, stopWorkers, waitWorkers := exec3.NewWorkersPool(lock.RLocker(), ctx, parallel, chainDb, rs, in, blockReader, chainConfig, genesis, engine, workerCount+1)
+	execWorkers, applyWorker, rws, stopWorkers, waitWorkers := exec3.NewWorkersPool(lock.RLocker(), ctx, parallel, chainDb, rs, in, blockReader, chainConfig, genesis, engine, workerCount+1, adapter)
 	defer stopWorkers()
 	applyWorker.DiscardReadList()
 
@@ -275,7 +277,7 @@ func ExecV3(ctx context.Context,
 				return err
 			}
 
-			processedTxNum, conflicts, triggers, processedBlockNum, stoppedAtBlockEnd, err := processResultQueue(in, rws, outputTxNum.Load(), rs, agg, tx, rwsConsumed, applyWorker, true, false)
+			processedTxNum, conflicts, triggers, processedBlockNum, stoppedAtBlockEnd, err := processResultQueue(in, rws, outputTxNum.Load(), rs, agg, tx, rwsConsumed, applyWorker, true, false, adapter)
 			if err != nil {
 				return err
 			}
@@ -364,7 +366,7 @@ func ExecV3(ctx context.Context,
 							rws.DrainNonBlocking()
 							applyWorker.ResetTx(tx)
 
-							processedTxNum, conflicts, triggers, processedBlockNum, stoppedAtBlockEnd, err := processResultQueue(in, rws, outputTxNum.Load(), rs, agg, tx, nil, applyWorker, false, true)
+							processedTxNum, conflicts, triggers, processedBlockNum, stoppedAtBlockEnd, err := processResultQueue(in, rws, outputTxNum.Load(), rs, agg, tx, nil, applyWorker, false, true, adapter)
 							if err != nil {
 								return err
 							}
@@ -622,7 +624,7 @@ Loop:
 				}
 			} else {
 				count++
-				applyWorker.RunTxTask(txTask)
+				applyWorker.RunTxTask(txTask, adapter)
 				if err := func() error {
 					if txTask.Final {
 						gasUsed += txTask.UsedGas
@@ -760,7 +762,7 @@ func blockWithSenders(db kv.RoDB, tx kv.Tx, blockReader services.BlockReader, bl
 	return blockReader.BlockByNumber(context.Background(), tx, blockNum)
 }
 
-func processResultQueue(in *exec22.QueueWithRetry, rws *exec22.ResultsQueue, outputTxNumIn uint64, rs *state.StateV3, agg *state2.AggregatorV3, applyTx kv.Tx, backPressure chan struct{}, applyWorker *exec3.Worker, canRetry, forceStopAtBlockEnd bool) (outputTxNum uint64, conflicts, triggers int, processedBlockNum uint64, stopedAtBlockEnd bool, err error) {
+func processResultQueue(in *exec22.QueueWithRetry, rws *exec22.ResultsQueue, outputTxNumIn uint64, rs *state.StateV3, agg *state2.AggregatorV3, applyTx kv.Tx, backPressure chan struct{}, applyWorker *exec3.Worker, canRetry, forceStopAtBlockEnd bool, adapter replication_adapter.Adapter) (outputTxNum uint64, conflicts, triggers int, processedBlockNum uint64, stopedAtBlockEnd bool, err error) {
 	rwsIt := rws.Iter()
 	defer rwsIt.Close()
 
@@ -778,7 +780,7 @@ func processResultQueue(in *exec22.QueueWithRetry, rws *exec22.ResultsQueue, out
 			}
 
 			// resolve first conflict right here: it's faster and conflict-free
-			applyWorker.RunTxTask(txTask)
+			applyWorker.RunTxTask(txTask, adapter)
 			if txTask.Error != nil {
 				return outputTxNum, conflicts, triggers, processedBlockNum, false, txTask.Error
 			}
@@ -814,6 +816,7 @@ func reconstituteStep(last bool,
 	as *libstate.AggregatorStep, chainDb kv.RwDB, blockReader services.FullBlockReader,
 	chainConfig *chain.Config, logger log.Logger, genesis *types.Genesis, engine consensus.Engine,
 	batchSize datasize.ByteSize, s *StageState, blockNum uint64, total uint64,
+	adapter replication_adapter.Adapter,
 ) error {
 	var startOk, endOk bool
 	startTxNum, endTxNum := as.TxNumRange()
@@ -932,7 +935,7 @@ func reconstituteStep(last bool,
 
 	for i := 0; i < workerCount; i++ {
 		i := i
-		g.Go(func() error { return reconWorkers[i].Run() })
+		g.Go(func() error { return reconWorkers[i].Run(adapter) })
 	}
 	commitThreshold := batchSize.Bytes()
 	prevRollbackCount := uint64(0)
@@ -1335,7 +1338,7 @@ func safeCloseTxTaskCh(ch chan *exec22.TxTask) {
 func ReconstituteState(ctx context.Context, s *StageState, dirs datadir.Dirs, workerCount int, batchSize datasize.ByteSize, chainDb kv.RwDB,
 	blockReader services.FullBlockReader,
 	logger log.Logger, agg *state2.AggregatorV3, engine consensus.Engine,
-	chainConfig *chain.Config, genesis *types.Genesis) (err error) {
+	chainConfig *chain.Config, genesis *types.Genesis, adapter replication_adapter.Adapter) (err error) {
 	startTime := time.Now()
 	defer agg.EnableMadvNormal().DisableReadAhead()
 
@@ -1403,7 +1406,7 @@ func ReconstituteState(ctx context.Context, s *StageState, dirs datadir.Dirs, wo
 		logger.Info("Step of incremental reconstitution", "step", step+1, "out of", len(aggSteps), "workers", workerCount)
 		if err := reconstituteStep(step+1 == len(aggSteps), workerCount, ctx, db,
 			txNum, dirs, as, chainDb, blockReader, chainConfig, logger, genesis,
-			engine, batchSize, s, blockNum, txNum,
+			engine, batchSize, s, blockNum, txNum, adapter,
 		); err != nil {
 			return err
 		}

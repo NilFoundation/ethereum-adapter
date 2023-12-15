@@ -2,6 +2,7 @@ package jsonrpc
 
 import (
 	"context"
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 	"sync"
 
 	"github.com/ledgerwatch/erigon-lib/chain"
@@ -18,7 +19,7 @@ import (
 	"github.com/ledgerwatch/erigon/turbo/shards"
 )
 
-func (api *OtterscanAPIImpl) searchTraceBlock(ctx context.Context, wg *sync.WaitGroup, addr common.Address, chainConfig *chain.Config, idx int, bNum uint64, results []*TransactionsWithReceipts) {
+func (api *OtterscanAPIImpl) searchTraceBlock(ctx context.Context, wg *sync.WaitGroup, addr common.Address, chainConfig *chain.Config, idx int, bNum uint64, results []*TransactionsWithReceipts, adapter replication_adapter.Adapter) {
 	defer wg.Done()
 
 	// Trace block for Txs
@@ -30,7 +31,7 @@ func (api *OtterscanAPIImpl) searchTraceBlock(ctx context.Context, wg *sync.Wait
 	}
 	defer newdbtx.Rollback()
 
-	_, result, err := api.traceBlock(newdbtx, ctx, bNum, addr, chainConfig)
+	_, result, err := api.traceBlock(newdbtx, ctx, bNum, addr, chainConfig, adapter)
 	if err != nil {
 		log.Error("Search trace error", "err", err)
 		results[idx] = nil
@@ -39,7 +40,7 @@ func (api *OtterscanAPIImpl) searchTraceBlock(ctx context.Context, wg *sync.Wait
 	results[idx] = result
 }
 
-func (api *OtterscanAPIImpl) traceBlock(dbtx kv.Tx, ctx context.Context, blockNum uint64, searchAddr common.Address, chainConfig *chain.Config) (bool, *TransactionsWithReceipts, error) {
+func (api *OtterscanAPIImpl) traceBlock(dbtx kv.Tx, ctx context.Context, blockNum uint64, searchAddr common.Address, chainConfig *chain.Config, adapter replication_adapter.Adapter) (bool, *TransactionsWithReceipts, error) {
 	rpcTxs := make([]*RPCTransaction, 0)
 	receipts := make([]map[string]interface{}, 0)
 
@@ -92,7 +93,7 @@ func (api *OtterscanAPIImpl) traceBlock(dbtx kv.Tx, ctx context.Context, blockNu
 		if _, err := core.ApplyMessage(vmenv, msg, new(core.GasPool).AddGas(tx.GetGas()).AddBlobGas(tx.GetBlobGas()), true /* refunds */, false /* gasBailout */); err != nil {
 			return false, nil, err
 		}
-		_ = ibs.FinalizeTx(rules, cachedWriter)
+		_ = ibs.FinalizeTx(rules, cachedWriter, adapter)
 
 		if tracer.Found {
 			rpcTx := newRPCTransaction(tx, block.Hash(), blockNum, uint64(idx), block.BaseFee())

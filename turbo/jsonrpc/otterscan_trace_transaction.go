@@ -2,6 +2,7 @@ package jsonrpc
 
 import (
 	"context"
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 	"github.com/ledgerwatch/erigon-lib/common/hexutil"
 	"math/big"
 
@@ -13,7 +14,7 @@ import (
 	"github.com/ledgerwatch/erigon/core/vm"
 )
 
-func (api *OtterscanAPIImpl) TraceTransaction(ctx context.Context, hash common.Hash) ([]*TraceEntry, error) {
+func (api *OtterscanAPIImpl) TraceTransaction(ctx context.Context, hash common.Hash, adapter replication_adapter.Adapter) ([]*TraceEntry, error) {
 	tx, err := api.db.BeginRo(ctx)
 	if err != nil {
 		return nil, err
@@ -21,7 +22,7 @@ func (api *OtterscanAPIImpl) TraceTransaction(ctx context.Context, hash common.H
 	defer tx.Rollback()
 
 	tracer := NewTransactionTracer(ctx)
-	if _, err := api.runTracer(ctx, tx, hash, tracer); err != nil {
+	if _, err := api.runTracer(ctx, tx, hash, tracer, adapter); err != nil {
 		return nil, err
 	}
 

@@ -8,6 +8,7 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -170,7 +171,7 @@ type MutationResolver interface {
 	SendRawTransaction(ctx context.Context, data string) (string, error)
 }
 type QueryResolver interface {
-	Block(ctx context.Context, number *string, hash *string) (*model.Block, error)
+	Block(ctx context.Context, number *string, hash *string, adapter replication_adapter.Adapter) (*model.Block, error)
 	Blocks(ctx context.Context, from *uint64, to *uint64) ([]*model.Block, error)
 	Pending(ctx context.Context) (*model.Pending, error)
 	Transaction(ctx context.Context, hash string) (*model.Transaction, error)
@@ -948,7 +949,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 			if first {
 				first = false
 				ctx = graphql.WithUnmarshalerMap(ctx, inputUnmarshalMap)
-				data = ec._Query(ctx, rc.Operation.SelectionSet)
+				data = ec._Query(ctx, rc.Operation.SelectionSet, replication_adapter.Adapter{})
 			} else {
 				if atomic.LoadInt32(&ec.pendingDeferred) > 0 {
 					result := <-ec.deferredResults
@@ -4303,7 +4304,7 @@ func (ec *executionContext) fieldContext_Pending_estimateGas(ctx context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_block(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Query_block(ctx context.Context, field graphql.CollectedField, adapter replication_adapter.Adapter) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_block(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -4317,7 +4318,7 @@ func (ec *executionContext) _Query_block(ctx context.Context, field graphql.Coll
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Block(rctx, fc.Args["number"].(*string), fc.Args["hash"].(*string))
+		return ec.resolvers.Query().Block(rctx, fc.Args["number"].(*string), fc.Args["hash"].(*string),adapter)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8903,7 +8904,7 @@ func (ec *executionContext) _Pending(ctx context.Context, sel ast.SelectionSet, 
 
 var queryImplementors = []string{"Query"}
 
-func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
+func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet, adapter replication_adapter.Adapter) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, queryImplementors)
 	ctx = graphql.WithFieldContext(ctx, &graphql.FieldContext{
 		Object: "Query",
@@ -8929,7 +8930,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_block(ctx, field)
+				res = ec._Query_block(ctx, field,adapter)
 				return res
 			}
 

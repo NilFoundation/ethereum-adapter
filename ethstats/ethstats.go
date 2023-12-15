@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 	"math/big"
 	"net/http"
 	"regexp"
@@ -149,7 +150,7 @@ func New(node *node.Node, servers []*sentry.GrpcServer, chainDB kv.RoDB, blockRe
 }
 
 // Start implements node.Lifecycle, starting up the monitoring and reporting daemon.
-func (s *Service) Start() error {
+func (s *Service) Start(adapter replication_adapter.Adapter) error {
 	go s.loop()
 
 	log.Info("Stats daemon started")

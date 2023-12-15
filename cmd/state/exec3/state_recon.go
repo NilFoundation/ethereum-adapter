@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/binary"
 	"fmt"
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 	"sync"
 
 	"github.com/RoaringBitmap/roaring/roaring64"
@@ -267,12 +268,12 @@ func (rw *ReconWorker) SetChainTx(chainTx kv.Tx) {
 	rw.stateWriter.SetChainTx(chainTx)
 }
 
-func (rw *ReconWorker) Run() error {
+func (rw *ReconWorker) Run(adapter replication_adapter.Adapter) error {
 	for txTask, ok, err := rw.rs.Schedule(rw.ctx); ok || err != nil; txTask, ok, err = rw.rs.Schedule(rw.ctx) {
 		if err != nil {
 			return err
 		}
-		if err := rw.runTxTask(txTask); err != nil {
+		if err := rw.runTxTask(txTask, adapter); err != nil {
 			return err
 		}
 	}
@@ -281,7 +282,7 @@ func (rw *ReconWorker) Run() error {
 
 var noop = state.NewNoopWriter()
 
-func (rw *ReconWorker) runTxTask(txTask *exec22.TxTask) error {
+func (rw *ReconWorker) runTxTask(txTask *exec22.TxTask, adapter replication_adapter.Adapter) error {
 	rw.lock.Lock()
 	defer rw.lock.Unlock()
 	rw.stateReader.SetTxNum(txTask.TxNum)
@@ -297,7 +298,7 @@ func (rw *ReconWorker) runTxTask(txTask *exec22.TxTask) error {
 	if txTask.BlockNum == 0 && txTask.TxIndex == -1 {
 		//fmt.Printf("txNum=%d, blockNum=%d, Genesis\n", txTask.TxNum, txTask.BlockNum)
 		// Genesis block
-		_, ibs, err = core.GenesisToBlock(rw.genesis, "")
+		_, ibs, err = core.GenesisToBlock(rw.genesis, "", adapter)
 		if err != nil {
 			return err
 		}
@@ -323,7 +324,7 @@ func (rw *ReconWorker) runTxTask(txTask *exec22.TxTask) error {
 		}
 
 		rw.engine.Initialize(rw.chainConfig, rw.chain, txTask.Header, ibs, syscall, logger)
-		if err = ibs.FinalizeTx(rules, noop); err != nil {
+		if err = ibs.FinalizeTx(rules, noop, adapter); err != nil {
 			if _, readError := rw.stateReader.ReadError(); !readError {
 				return err
 			}
@@ -343,7 +344,7 @@ func (rw *ReconWorker) runTxTask(txTask *exec22.TxTask) error {
 				return fmt.Errorf("could not apply blockNum=%d, txIdx=%d txNum=%d [%x] failed: %w", txTask.BlockNum, txTask.TxIndex, txTask.TxNum, txTask.Tx.Hash(), err)
 			}
 		}
-		if err = ibs.FinalizeTx(rules, noop); err != nil {
+		if err = ibs.FinalizeTx(rules, noop, adapter); err != nil {
 			if _, readError := rw.stateReader.ReadError(); !readError {
 				return err
 			}
@@ -353,7 +354,7 @@ func (rw *ReconWorker) runTxTask(txTask *exec22.TxTask) error {
 		//fmt.Printf("rollback %d\n", txNum)
 		rw.rs.RollbackTx(txTask, dependency)
 	} else {
-		if err = ibs.CommitBlock(rules, rw.stateWriter); err != nil {
+		if err = ibs.CommitBlock(rules, rw.stateWriter, adapter); err != nil {
 			return err
 		}
 		//fmt.Printf("commit %d\n", txNum)

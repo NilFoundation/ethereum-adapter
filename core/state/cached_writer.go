@@ -1,6 +1,7 @@
 package state
 
 import (
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 	"github.com/holiman/uint256"
 	"github.com/ledgerwatch/erigon-lib/common"
 
@@ -19,8 +20,8 @@ func NewCachedWriter(w WriterWithChangeSets, cache *shards.StateCache) *CachedWr
 	return &CachedWriter{w: w, cache: cache}
 }
 
-func (cw *CachedWriter) UpdateAccountData(address common.Address, original, account *accounts.Account) error {
-	if err := cw.w.UpdateAccountData(address, original, account); err != nil {
+func (cw *CachedWriter) UpdateAccountData(address common.Address, original, account *accounts.Account, adapter replication_adapter.Adapter) error {
+	if err := cw.w.UpdateAccountData(address, original, account, adapter); err != nil {
 		return err
 	}
 	cw.cache.SetAccountWrite(address.Bytes(), account)
@@ -43,8 +44,8 @@ func (cw *CachedWriter) DeleteAccount(address common.Address, original *accounts
 	return nil
 }
 
-func (cw *CachedWriter) WriteAccountStorage(address common.Address, incarnation uint64, key *common.Hash, original, value *uint256.Int) error {
-	if err := cw.w.WriteAccountStorage(address, incarnation, key, original, value); err != nil {
+func (cw *CachedWriter) WriteAccountStorage(address common.Address, incarnation uint64, key *common.Hash, original, value *uint256.Int, adapter replication_adapter.Adapter) error {
+	if err := cw.w.WriteAccountStorage(address, incarnation, key, original, value, adapter); err != nil {
 		return err
 	}
 	if *original == *value {

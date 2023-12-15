@@ -23,8 +23,9 @@ func NewDevDevnet(
 		Chain:              networkname.DevChainName,
 		Logger:             logger,
 		BasePrivateApiAddr: "localhost:10090",
+		BasePort:           7777,
 		BaseRPCHost:        baseRpcHost,
-		BaseRPCPort:        baseRpcPort,
+		BaseRPCPort:        7778,
 		Alloc: types.GenesisAlloc{
 			faucetSource.Address: {Balance: accounts.EtherAmount(200_000)},
 		},
@@ -37,6 +38,7 @@ func NewDevDevnet(
 				NodeArgs: args.NodeArgs{
 					ConsoleVerbosity: "0",
 					DirVerbosity:     "5",
+					Adapter:          true,
 				},
 				AccountSlots: 200,
 			},
@@ -44,6 +46,7 @@ func NewDevDevnet(
 				NodeArgs: args.NodeArgs{
 					ConsoleVerbosity: "0",
 					DirVerbosity:     "5",
+					Adapter:          false,
 				},
 			},
 		},

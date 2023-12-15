@@ -36,7 +36,7 @@ func TestMutationDeleteTimestamp(t *testing.T) {
 	emptyAccount := accounts.NewAccount()
 	for i := range acc {
 		acc[i], addr[i] = randomAccount(t)
-		if err := blockWriter.UpdateAccountData(addr[i], &emptyAccount, acc[i]); err != nil {
+		if err := blockWriter.UpdateAccountData(addr[i], &emptyAccount, acc[i], false); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -92,7 +92,7 @@ func TestMutationCommit(t *testing.T) {
 	numOfAccounts := 5
 	numOfStateKeys := 5
 
-	addrs, accState, accStateStorage, accHistory, accHistoryStateStorage := generateAccountsWithStorageAndHistory(t, NewPlainStateWriter(tx, tx, 2), numOfAccounts, numOfStateKeys)
+	addrs, accState, accStateStorage, accHistory, accHistoryStateStorage := generateAccountsWithStorageAndHistory(t, NewPlainStateWriter(tx, tx, 2), numOfAccounts, numOfStateKeys, false)
 
 	for i, addr := range addrs {
 		acc, err := NewPlainStateReader(tx).ReadAccountData(addr)
@@ -211,7 +211,7 @@ func TestMutationCommit(t *testing.T) {
 	assert.Equal(t, cs, expectedChangeSet)
 }
 
-func generateAccountsWithStorageAndHistory(t *testing.T, blockWriter *PlainStateWriter, numOfAccounts, numOfStateKeys int) ([]libcommon.Address, []*accounts.Account, []map[libcommon.Hash]uint256.Int, []*accounts.Account, []map[libcommon.Hash]uint256.Int) {
+func generateAccountsWithStorageAndHistory(t *testing.T, blockWriter *PlainStateWriter, numOfAccounts, numOfStateKeys int, adapter replication_adapter.Adapter) ([]libcommon.Address, []*accounts.Account, []map[libcommon.Hash]uint256.Int, []*accounts.Account, []map[libcommon.Hash]uint256.Int) {
 	t.Helper()
 
 	accHistory := make([]*accounts.Account, numOfAccounts)
@@ -242,11 +242,11 @@ func generateAccountsWithStorageAndHistory(t *testing.T, blockWriter *PlainState
 
 			value := uint256.NewInt(uint64(10 + j))
 			accHistoryStateStorage[i][key] = *value
-			if err := blockWriter.WriteAccountStorage(addrs[i], accHistory[i].Incarnation, &key, value, newValue); err != nil {
+			if err := blockWriter.WriteAccountStorage(addrs[i], accHistory[i].Incarnation, &key, value, newValue, adapter); err != nil {
 				t.Fatal(err)
 			}
 		}
-		if err := blockWriter.UpdateAccountData(addrs[i], accHistory[i], accState[i]); err != nil {
+		if err := blockWriter.UpdateAccountData(addrs[i], accHistory[i], accState[i], false); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -1094,7 +1094,7 @@ type accData struct {
 func writeBlockData(t *testing.T, blockWriter *PlainStateWriter, data []accData) {
 	for i := range data {
 		if data[i].newVal != nil {
-			if err := blockWriter.UpdateAccountData(data[i].addr, data[i].oldVal, data[i].newVal); err != nil {
+			if err := blockWriter.UpdateAccountData(data[i].addr, data[i].oldVal, data[i].newVal, false); err != nil {
 				t.Fatal(err)
 			}
 		} else {
@@ -1120,10 +1120,10 @@ type storageData struct {
 	newVal *uint256.Int
 }
 
-func writeStorageBlockData(t *testing.T, blockWriter *PlainStateWriter, data []storageData) {
+func writeStorageBlockData(t *testing.T, blockWriter *PlainStateWriter, data []storageData, adapter replication_adapter.Adapter) {
 
 	for i := range data {
-		if err := blockWriter.WriteAccountStorage(data[i].addr, data[i].inc, &data[i].key, data[i].oldVal, data[i].newVal); err != nil {
+		if err := blockWriter.WriteAccountStorage(data[i].addr, data[i].inc, &data[i].key, data[i].oldVal, data[i].newVal, adapter); err != nil {
 			t.Fatal(err)
 		}
 	}

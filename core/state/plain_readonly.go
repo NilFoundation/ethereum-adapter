@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 	"github.com/ledgerwatch/erigon-lib/kv/dbutils"
 	"sort"
 
@@ -270,7 +271,7 @@ func (s *PlainState) ReadAccountIncarnation(address libcommon.Address) (uint64, 
 	return inc - 1, nil
 }
 
-func (s *PlainState) UpdateAccountData(address libcommon.Address, original, account *accounts.Account) error {
+func (s *PlainState) UpdateAccountData(address libcommon.Address, original, account *accounts.Account, adapter replication_adapter.Adapter) error {
 	return nil
 }
 
@@ -282,7 +283,7 @@ func (s *PlainState) UpdateAccountCode(address libcommon.Address, incarnation ui
 	return nil
 }
 
-func (s *PlainState) WriteAccountStorage(address libcommon.Address, incarnation uint64, key *libcommon.Hash, original, value *uint256.Int) error {
+func (s *PlainState) WriteAccountStorage(address libcommon.Address, incarnation uint64, key *libcommon.Hash, original, value *uint256.Int, adapter replication_adapter.Adapter) error {
 	t, ok := s.storage[address]
 	if !ok {
 		t = btree.New(16)

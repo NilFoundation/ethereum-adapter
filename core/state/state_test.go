@@ -55,9 +55,9 @@ func (s *StateSuite) TestDump(c *checker.C) {
 	obj3.SetBalance(uint256.NewInt(44))
 
 	// write some of them to the trie
-	err := s.w.UpdateAccountData(obj1.address, &obj1.data, new(accounts.Account))
+	err := s.w.UpdateAccountData(obj1.address, &obj1.data, new(accounts.Account), false)
 	c.Check(err, checker.IsNil)
-	err = s.w.UpdateAccountData(obj2.address, &obj2.data, new(accounts.Account))
+	err = s.w.UpdateAccountData(obj2.address, &obj2.data, new(accounts.Account), false)
 	c.Check(err, checker.IsNil)
 
 	err = s.state.FinalizeTx(&chain.Rules{}, s.w)
@@ -338,11 +338,11 @@ func TestDump(t *testing.T) {
 	obj3.SetBalance(uint256.NewInt(44))
 
 	// write some of them to the trie
-	err := w.UpdateAccountData(obj1.address, &obj1.data, new(accounts.Account))
+	err := w.UpdateAccountData(obj1.address, &obj1.data, new(accounts.Account), false)
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = w.UpdateAccountData(obj2.address, &obj2.data, new(accounts.Account))
+	err = w.UpdateAccountData(obj2.address, &obj2.data, new(accounts.Account), false)
 	if err != nil {
 		t.Fatal(err)
 	}
