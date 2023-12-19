@@ -78,30 +78,30 @@ func (w *PlainStateWriter) UpdateAccountData(address libcommon.Address, original
 		if problemConnection {
 			fmt.Println("Connected!")
 		}
-		op = core.BasicOperation[any]{
-			Type:        core.PutBasicOp,
-			BlockNumber: core.BlockNumberType(w.csw.blockNumber),
-			Params: core.PutAccountParams{
-				Address: core.Address(address.String()),
-				Balance: &account.Balance,
-			},
-		}
-		resp, err = adapter.SendAccountOperation(op)
-		problemConnection = false
-		for err != nil {
-			problemConnection = true
-			fmt.Println("Sleep while write to State Keeper")
-			time.Sleep(time.Second * 1)
-			resp, err = adapter.SendAccountOperation(op)
-		}
-		if problemConnection {
-			fmt.Println("Connected!")
-		}
-		//if err != nil {
-		//	panic(err)
-		//}
 		if resp.StatusCode == 500 {
-			panic(resp.StatusCode)
+			op = core.BasicOperation[any]{
+				Type:        core.PutBasicOp,
+				BlockNumber: core.BlockNumberType(w.csw.blockNumber),
+				Params: core.PutAccountParams{
+					Address:     core.Address(address.String()),
+					Balance:     &account.Balance,
+					StorageRoot: core.Hash(account.Root),
+				},
+			}
+			resp, err = adapter.SendAccountOperation(op)
+			problemConnection = false
+			for err != nil {
+				problemConnection = true
+				fmt.Println("Sleep while write to State Keeper")
+				time.Sleep(time.Second * 1)
+				resp, err = adapter.SendAccountOperation(op)
+			}
+			if problemConnection {
+				fmt.Println("Connected!")
+			}
+			if resp.StatusCode == 500 {
+				panic(resp.StatusCode)
+			}
 		}
 	}
 	return w.db.Put(kv.PlainState, address[:], value)
@@ -171,9 +171,9 @@ func (w *PlainStateWriter) WriteAccountStorage(address libcommon.Address, incarn
 		if problemConnection {
 			fmt.Println("Connected!")
 		}
-		//if err != nil {
-		//	panic(err)
-		//}
+		if resp.StatusCode == 500 {
+			panic(resp.StatusCode)
+		}
 		_ = resp
 	}
 

@@ -18,6 +18,7 @@ package tests
 
 import (
 	"context"
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 	"math/big"
 	"testing"
 
@@ -83,18 +84,18 @@ func TestSelfDestructReceive(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			block.AddTx(txn)
+			block.AddTx(txn, replication_adapter.Adapter{})
 			txn, err = selfDestructorContract.SelfDestruct(transactOpts)
 			if err != nil {
 				t.Fatal(err)
 			}
-			block.AddTx(txn)
+			block.AddTx(txn, replication_adapter.Adapter{})
 			// Send 1 wei to contract after self-destruction
 			txn, err = types.SignTx(types.NewTransaction(block.TxNonce(address), contractAddress, uint256.NewInt(1000), 21000, uint256.NewInt(1), nil), *signer, key)
-			block.AddTx(txn)
+			block.AddTx(txn, replication_adapter.Adapter{})
 		}
 		contractBackend.Commit()
-	})
+	}, replication_adapter.Adapter{})
 	if err != nil {
 		t.Fatalf("generate blocks: %v", err)
 	}

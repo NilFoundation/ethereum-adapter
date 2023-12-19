@@ -37,8 +37,7 @@ func NewDevDevnet(
 				NodeArgs: args.NodeArgs{
 					ConsoleVerbosity: "0",
 					DirVerbosity:     "5",
-					//Adapter:          true,
-					Adapter: false,
+					Adapter:          true,
 				},
 				AccountSlots: 200,
 			},
