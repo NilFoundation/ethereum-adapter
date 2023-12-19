@@ -71,21 +71,21 @@ func TestReplication(t *testing.T) {
 	runCtx, _ := tests.ContextStart(t, "")
 	ctx := runCtx.WithCurrentNetwork(0).WithCurrentNode(0)
 	node := devnet.SelectBlockProducer(ctx)
-	//const recipientAddress = "0xa94f5374Fce5edBC8E2a8697C15331677e6EbF0B"
-	//
-	//const sendValue1 uint64 = 229
-	//SendTx(ctx, recipientAddress, accounts.DevAddress, sendValue1)
-	//
-	//fmt.Println("Block now:", waitNextBlock(node))
-	//
-	//const sendValue2 uint64 = 114
-	//SendTx(ctx, recipientAddress, accounts.DevAddress, sendValue2)
-	//
-	//fmt.Println("Block now:", waitNextBlock(node))
-	//
-	//bal, _ := node.GetBalance(common.HexToAddress(recipientAddress), rpc.BlockNumber(-1).AsBlockReference())
-	//fmt.Println("Balance:", bal)
-	//fmt.Println("-------------------------------------------------------------------------------------")
+	const recipientAddress = "0xa94f5374Fce5edBC8E2a8697C15331677e6EbF0B"
+
+	const sendValue1 uint64 = 229
+	SendTx(ctx, recipientAddress, accounts.DevAddress, sendValue1)
+
+	fmt.Println("Block now:", waitNextBlock(node))
+
+	const sendValue2 uint64 = 114
+	SendTx(ctx, recipientAddress, accounts.DevAddress, sendValue2)
+
+	fmt.Println("Block now:", waitNextBlock(node))
+
+	bal, _ := node.GetBalance(common.HexToAddress(recipientAddress), rpc.BlockNumber(-1).AsBlockReference())
+	fmt.Println("Balance:", bal)
+	fmt.Println("-------------------------------------------------------------------------------------")
 	transactor := common.HexToAddress(accounts.DevAddress)
 	count, err := node.GetTransactionCount(transactor, rpc.LatestBlock)
 
