@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 	"math/big"
 	"testing"
 
@@ -100,13 +101,13 @@ func TestCreate2Revive(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			block.AddTx(tx)
+			block.AddTx(tx, replication_adapter.Adapter{})
 		case 1:
 			tx, err = revive.Deploy(transactOpts, big.NewInt(0))
 			if err != nil {
 				t.Fatal(err)
 			}
-			block.AddTx(tx)
+			block.AddTx(tx, replication_adapter.Adapter{})
 		case 2:
 			tx, err = types.SignTx(types.NewTransaction(block.TxNonce(address), create2address, uint256.NewInt(0), 1000000, new(uint256.Int), nil), *signer, key)
 			if err != nil {
@@ -116,16 +117,16 @@ func TestCreate2Revive(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			block.AddTx(tx)
+			block.AddTx(tx, replication_adapter.Adapter{})
 		case 3:
 			tx, err = revive.Deploy(transactOpts, big.NewInt(0))
 			if err != nil {
 				t.Fatal(err)
 			}
-			block.AddTx(tx)
+			block.AddTx(tx, replication_adapter.Adapter{})
 		}
 		contractBackend.Commit()
-	})
+	}, replication_adapter.Adapter{})
 	if err != nil {
 		t.Fatalf("generate blocks: %v", err)
 	}
@@ -271,13 +272,13 @@ func TestCreate2Polymorth(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			block.AddTx(tx)
+			block.AddTx(tx, replication_adapter.Adapter{})
 		case 1:
 			tx, err = poly.Deploy(transactOpts, big.NewInt(0))
 			if err != nil {
 				t.Fatal(err)
 			}
-			block.AddTx(tx)
+			block.AddTx(tx, replication_adapter.Adapter{})
 		case 2:
 			// Trigger self-destruct
 			tx, err = types.SignTx(types.NewTransaction(block.TxNonce(address), create2address, uint256.NewInt(0), 1000000, new(uint256.Int), nil), *signer, key)
@@ -288,13 +289,13 @@ func TestCreate2Polymorth(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			block.AddTx(tx)
+			block.AddTx(tx, replication_adapter.Adapter{})
 		case 3:
 			tx, err = poly.Deploy(transactOpts, big.NewInt(0))
 			if err != nil {
 				t.Fatal(err)
 			}
-			block.AddTx(tx)
+			block.AddTx(tx, replication_adapter.Adapter{})
 		case 4:
 			// Trigger self-destruct
 			tx, err = types.SignTx(types.NewTransaction(block.TxNonce(address), create2address, uint256.NewInt(0), 1000000, new(uint256.Int), nil), *signer, key)
@@ -305,13 +306,13 @@ func TestCreate2Polymorth(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			block.AddTx(tx)
+			block.AddTx(tx, replication_adapter.Adapter{})
 			// Recreate in the same block
 			tx, err = poly.Deploy(transactOpts, big.NewInt(0))
 			if err != nil {
 				t.Fatal(err)
 			}
-			block.AddTx(tx)
+			block.AddTx(tx, replication_adapter.Adapter{})
 			// Trigger self-destruct
 			tx, err = types.SignTx(types.NewTransaction(block.TxNonce(address), create2address, uint256.NewInt(0), 1000000, new(uint256.Int), nil), *signer, key)
 			if err != nil {
@@ -321,16 +322,17 @@ func TestCreate2Polymorth(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			block.AddTx(tx)
+			block.AddTx(tx, replication_adapter.Adapter{})
 			// Recreate in the same block
 			tx, err = poly.Deploy(transactOpts, big.NewInt(0))
 			if err != nil {
 				t.Fatal(err)
 			}
-			block.AddTx(tx)
+			block.AddTx(tx, replication_adapter.Adapter{})
 		}
 		contractBackend.Commit()
-	})
+	},
+		replication_adapter.Adapter{})
 	if err != nil {
 		t.Fatalf("generate blocks: %v", err)
 	}
@@ -478,22 +480,23 @@ func TestReorgOverSelfDestruct(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			block.AddTx(tx)
+			block.AddTx(tx, replication_adapter.Adapter{})
 		case 1:
 			tx, err = selfDestruct.Change(transactOpts)
 			if err != nil {
 				t.Fatal(err)
 			}
-			block.AddTx(tx)
+			block.AddTx(tx, replication_adapter.Adapter{})
 		case 2:
 			tx, err = selfDestruct.Destruct(transactOpts)
 			if err != nil {
 				t.Fatal(err)
 			}
-			block.AddTx(tx)
+			block.AddTx(tx, replication_adapter.Adapter{})
 		}
 		contractBackend.Commit()
-	})
+	},
+		replication_adapter.Adapter{})
 	if err != nil {
 		t.Fatalf("generate blocks: %v", err)
 	}
@@ -513,10 +516,10 @@ func TestReorgOverSelfDestruct(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			block.AddTx(tx)
+			block.AddTx(tx, replication_adapter.Adapter{})
 		}
 		contractBackendLonger.Commit()
-	})
+	}, replication_adapter.Adapter{})
 	if err != nil {
 		t.Fatalf("generate long blocks")
 	}
@@ -626,16 +629,17 @@ func TestReorgOverStateChange(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			block.AddTx(tx)
+			block.AddTx(tx, replication_adapter.Adapter{})
 		case 1:
 			tx, err = selfDestruct.Change(transactOpts)
 			if err != nil {
 				t.Fatal(err)
 			}
-			block.AddTx(tx)
+			block.AddTx(tx, replication_adapter.Adapter{})
 		}
 		contractBackend.Commit()
-	})
+	},
+		replication_adapter.Adapter{})
 	if err != nil {
 		t.Fatalf("generate blocks: %v", err)
 	}
@@ -654,10 +658,10 @@ func TestReorgOverStateChange(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			block.AddTx(tx)
+			block.AddTx(tx, replication_adapter.Adapter{})
 		}
 		contractBackendLonger.Commit()
-	})
+	}, replication_adapter.Adapter{})
 	if err != nil {
 		t.Fatalf("generate longer blocks: %v", err)
 	}
@@ -781,10 +785,10 @@ func TestCreateOnExistingStorage(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			block.AddTx(tx)
+			block.AddTx(tx, replication_adapter.Adapter{})
 		}
 		contractBackend.Commit()
-	})
+	}, replication_adapter.Adapter{})
 	if err != nil {
 		t.Fatalf("generate blocks: %v", err)
 	}
@@ -842,25 +846,25 @@ func TestReproduceCrash(t *testing.T) {
 	intraBlockState := state.New(state.NewPlainState(tx, 1, nil))
 	// Start the 1st transaction
 	intraBlockState.CreateAccount(contract, true)
-	if err := intraBlockState.FinalizeTx(&chain.Rules{}, tsw); err != nil {
+	if err := intraBlockState.FinalizeTx(&chain.Rules{}, tsw, replication_adapter.Adapter{}); err != nil {
 		t.Errorf("error finalising 1st tx: %v", err)
 	}
 	// Start the 2nd transaction
 	intraBlockState.SetState(contract, &storageKey1, *value1)
-	if err := intraBlockState.FinalizeTx(&chain.Rules{}, tsw); err != nil {
+	if err := intraBlockState.FinalizeTx(&chain.Rules{}, tsw, replication_adapter.Adapter{}); err != nil {
 		t.Errorf("error finalising 1st tx: %v", err)
 	}
 	// Start the 3rd transaction
 	intraBlockState.AddBalance(contract, uint256.NewInt(1000000000))
 	intraBlockState.SetState(contract, &storageKey2, *value2)
-	if err := intraBlockState.FinalizeTx(&chain.Rules{}, tsw); err != nil {
+	if err := intraBlockState.FinalizeTx(&chain.Rules{}, tsw, replication_adapter.Adapter{}); err != nil {
 		t.Errorf("error finalising 1st tx: %v", err)
 	}
 	// Start the 4th transaction - clearing both storage cells
 	intraBlockState.SubBalance(contract, uint256.NewInt(1000000000))
 	intraBlockState.SetState(contract, &storageKey1, *value0)
 	intraBlockState.SetState(contract, &storageKey2, *value0)
-	if err := intraBlockState.FinalizeTx(&chain.Rules{}, tsw); err != nil {
+	if err := intraBlockState.FinalizeTx(&chain.Rules{}, tsw, replication_adapter.Adapter{}); err != nil {
 		t.Errorf("error finalising 1st tx: %v", err)
 	}
 }
@@ -908,17 +912,17 @@ func TestEip2200Gas(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			block.AddTx(tx)
+			block.AddTx(tx, replication_adapter.Adapter{})
 
 			transactOpts.GasPrice = big.NewInt(1)
 			tx, err = selfDestruct.Change(transactOpts)
 			if err != nil {
 				t.Fatal(err)
 			}
-			block.AddTx(tx)
+			block.AddTx(tx, replication_adapter.Adapter{})
 		}
 		contractBackend.Commit()
-	})
+	}, replication_adapter.Adapter{})
 	if err != nil {
 		t.Fatalf("generate blocks: %v", err)
 	}
@@ -997,16 +1001,16 @@ func TestWrongIncarnation(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			block.AddTx(tx)
+			block.AddTx(tx, replication_adapter.Adapter{})
 		case 1:
 			tx, err = changer.Change(transactOpts)
 			if err != nil {
 				t.Fatal(err)
 			}
-			block.AddTx(tx)
+			block.AddTx(tx, replication_adapter.Adapter{})
 		}
 		contractBackend.Commit()
-	})
+	}, replication_adapter.Adapter{})
 	if err != nil {
 		t.Fatalf("generate blocks: %v", err)
 	}
@@ -1115,16 +1119,16 @@ func TestWrongIncarnation2(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			block.AddTx(tx)
+			block.AddTx(tx, replication_adapter.Adapter{})
 		case 1:
 			contractAddress, tx, _, err = contracts.DeployChanger(transactOpts, contractBackend)
 			if err != nil {
 				t.Fatal(err)
 			}
-			block.AddTx(tx)
+			block.AddTx(tx, replication_adapter.Adapter{})
 		}
 		contractBackend.Commit()
-	})
+	}, replication_adapter.Adapter{})
 	if err != nil {
 		t.Fatalf("generate blocks: %v", err)
 	}
@@ -1151,10 +1155,10 @@ func TestWrongIncarnation2(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			block.AddTx(tx)
+			block.AddTx(tx, replication_adapter.Adapter{})
 		}
 		contractBackendLonger.Commit()
-	})
+	}, replication_adapter.Adapter{})
 	if err != nil {
 		t.Fatalf("generate longer blocks: %v", err)
 	}
@@ -1233,7 +1237,7 @@ func TestChangeAccountCodeBetweenBlocks(t *testing.T) {
 
 	intraBlockState.SetCode(contract, oldCode)
 	intraBlockState.AddBalance(contract, uint256.NewInt(1000000000))
-	if err := intraBlockState.FinalizeTx(&chain.Rules{}, tsw); err != nil {
+	if err := intraBlockState.FinalizeTx(&chain.Rules{}, tsw, replication_adapter.Adapter{}); err != nil {
 		t.Errorf("error finalising 1st tx: %v", err)
 	}
 	_, err := trie.CalcRoot("test", tx)
@@ -1246,7 +1250,7 @@ func TestChangeAccountCodeBetweenBlocks(t *testing.T) {
 	newCode := []byte{0x04, 0x04, 0x04, 0x04}
 	intraBlockState.SetCode(contract, newCode)
 
-	if err := intraBlockState.FinalizeTx(&chain.Rules{}, tsw); err != nil {
+	if err := intraBlockState.FinalizeTx(&chain.Rules{}, tsw, replication_adapter.Adapter{}); err != nil {
 		t.Errorf("error finalising 1st tx: %v", err)
 	}
 
@@ -1271,10 +1275,10 @@ func TestCacheCodeSizeSeparately(t *testing.T) {
 
 	intraBlockState.SetCode(contract, code)
 	intraBlockState.AddBalance(contract, uint256.NewInt(1000000000))
-	if err := intraBlockState.FinalizeTx(&chain.Rules{}, w); err != nil {
+	if err := intraBlockState.FinalizeTx(&chain.Rules{}, w, replication_adapter.Adapter{}); err != nil {
 		t.Errorf("error finalising 1st tx: %v", err)
 	}
-	if err := intraBlockState.CommitBlock(&chain.Rules{}, w); err != nil {
+	if err := intraBlockState.CommitBlock(&chain.Rules{}, w, replication_adapter.Adapter{}); err != nil {
 		t.Errorf("error committing block: %v", err)
 	}
 
@@ -1304,10 +1308,10 @@ func TestCacheCodeSizeInTrie(t *testing.T) {
 
 	intraBlockState.SetCode(contract, code)
 	intraBlockState.AddBalance(contract, uint256.NewInt(1000000000))
-	if err := intraBlockState.FinalizeTx(&chain.Rules{}, w); err != nil {
+	if err := intraBlockState.FinalizeTx(&chain.Rules{}, w, replication_adapter.Adapter{}); err != nil {
 		t.Errorf("error finalising 1st tx: %v", err)
 	}
-	if err := intraBlockState.CommitBlock(&chain.Rules{}, w); err != nil {
+	if err := intraBlockState.CommitBlock(&chain.Rules{}, w, replication_adapter.Adapter{}); err != nil {
 		t.Errorf("error committing block: %v", err)
 	}
 
@@ -1365,7 +1369,7 @@ func TestRecreateAndRewind(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			block.AddTx(tx)
+			block.AddTx(tx, replication_adapter.Adapter{})
 		case 1:
 			// Calculate the address of the Phoenix and create handle to phoenix contract
 			var codeHash libcommon.Hash
@@ -1380,35 +1384,35 @@ func TestRecreateAndRewind(t *testing.T) {
 			if tx, err = revive.Deploy(transactOpts, [32]byte{}); err != nil {
 				panic(err)
 			}
-			block.AddTx(tx)
+			block.AddTx(tx, replication_adapter.Adapter{})
 			// Modify phoenix storage
 			if tx, err = phoenix.Increment(transactOpts); err != nil {
 				panic(err)
 			}
-			block.AddTx(tx)
+			block.AddTx(tx, replication_adapter.Adapter{})
 			if tx, err = phoenix.Increment(transactOpts); err != nil {
 				panic(err)
 			}
-			block.AddTx(tx)
+			block.AddTx(tx, replication_adapter.Adapter{})
 		case 2:
 			// Destruct the phoenix
 			if tx, err = phoenix.Die(transactOpts); err != nil {
 				panic(err)
 			}
-			block.AddTx(tx)
+			block.AddTx(tx, replication_adapter.Adapter{})
 		case 3:
 			// Recreate the phoenix, and change the storage
 			if tx, err = revive.Deploy(transactOpts, [32]byte{}); err != nil {
 				panic(err)
 			}
-			block.AddTx(tx)
+			block.AddTx(tx, replication_adapter.Adapter{})
 			if tx, err = phoenix.Increment(transactOpts); err != nil {
 				panic(err)
 			}
-			block.AddTx(tx)
+			block.AddTx(tx, replication_adapter.Adapter{})
 		}
 		contractBackend.Commit()
-	})
+	}, replication_adapter.Adapter{})
 	if err1 != nil {
 		t.Fatalf("generate blocks: %v", err1)
 	}
@@ -1427,7 +1431,7 @@ func TestRecreateAndRewind(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			block.AddTx(tx)
+			block.AddTx(tx, replication_adapter.Adapter{})
 		case 1:
 			// Calculate the address of the Phoenix and create handle to phoenix contract
 			var codeHash libcommon.Hash
@@ -1442,31 +1446,31 @@ func TestRecreateAndRewind(t *testing.T) {
 			if tx, err = revive.Deploy(transactOptsLonger, [32]byte{}); err != nil {
 				panic(err)
 			}
-			block.AddTx(tx)
+			block.AddTx(tx, replication_adapter.Adapter{})
 			// Modify phoenix storage
 			if tx, err = phoenix.Increment(transactOptsLonger); err != nil {
 				panic(err)
 			}
-			block.AddTx(tx)
+			block.AddTx(tx, replication_adapter.Adapter{})
 			if tx, err = phoenix.Increment(transactOptsLonger); err != nil {
 				panic(err)
 			}
-			block.AddTx(tx)
+			block.AddTx(tx, replication_adapter.Adapter{})
 		case 2:
 			// Destruct the phoenix
 			if tx, err = phoenix.Die(transactOptsLonger); err != nil {
 				panic(err)
 			}
-			block.AddTx(tx)
+			block.AddTx(tx, replication_adapter.Adapter{})
 		case 3:
 			// Recreate the phoenix, but now with the empty storage
 			if tx, err = revive.Deploy(transactOptsLonger, [32]byte{}); err != nil {
 				panic(err)
 			}
-			block.AddTx(tx)
+			block.AddTx(tx, replication_adapter.Adapter{})
 		}
 		contractBackendLonger.Commit()
-	})
+	}, replication_adapter.Adapter{})
 	if err1 != nil {
 		t.Fatalf("generate longer blocks: %v", err1)
 	}
@@ -1561,14 +1565,14 @@ func TestTxLookupUnwind(t *testing.T) {
 			if e != nil {
 				t.Fatal(e)
 			}
-			block.AddTx(tx)
+			block.AddTx(tx, replication_adapter.Adapter{})
 		}
-	})
+	}, replication_adapter.Adapter{})
 	if err != nil {
 		t.Fatal(err)
 	}
 	chain2, err := core.GenerateChain(m.ChainConfig, m.Genesis, m.Engine, m.DB, 3, func(i int, block *core.BlockGen) {
-	})
+	}, replication_adapter.Adapter{})
 	if err != nil {
 		t.Fatal(err)
 	}

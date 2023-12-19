@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 	"math/big"
 	"sync"
 	"testing"
@@ -169,7 +170,9 @@ func (b *SimulatedBackend) Rollback() {
 }
 
 func (b *SimulatedBackend) emptyPendingBlock() {
-	blockChain, _ := core.GenerateChain(b.m.ChainConfig, b.prependBlock, b.m.Engine, b.m.DB, 1, func(int, *core.BlockGen) {})
+	//TODO: check don't we need write here also
+	blockChain, _ := core.GenerateChain(b.m.ChainConfig, b.prependBlock, b.m.Engine, b.m.DB, 1, func(int, *core.BlockGen) {},
+		replication_adapter.Adapter{})
 	b.pendingBlock = blockChain.Blocks[0]
 	b.pendingReceipts = blockChain.Receipts[0]
 	b.pendingHeader = blockChain.Headers[0]
@@ -748,22 +751,28 @@ func (b *SimulatedBackend) SendTransaction(ctx context.Context, tx types.Transac
 
 	b.pendingState.SetTxContext(tx.Hash(), libcommon.Hash{}, len(b.pendingBlock.Transactions()))
 	//fmt.Printf("==== Start producing block %d, header: %d\n", b.pendingBlock.NumberU64(), b.pendingHeader.Number.Uint64())
+	//TODO: check don't we need write here also
 	if _, _, err := core.ApplyTransaction(
 		b.m.ChainConfig, core.GetHashFn(b.pendingHeader, b.getHeader), b.m.Engine,
 		&b.pendingHeader.Coinbase, b.gasPool,
 		b.pendingState, state.NewNoopWriter(),
 		b.pendingHeader, tx,
 		&b.pendingHeader.GasUsed, b.pendingHeader.BlobGasUsed,
-		vm.Config{}); err != nil {
+		vm.Config{},
+		replication_adapter.Adapter{}); err != nil {
 		return err
 	}
 	//fmt.Printf("==== Start producing block %d\n", (b.prependBlock.NumberU64() + 1))
+	//TODO: check don't we need write here also
 	chain, err := core.GenerateChain(b.m.ChainConfig, b.prependBlock, b.m.Engine, b.m.DB, 1, func(number int, block *core.BlockGen) {
 		for _, tx := range b.pendingBlock.Transactions() {
-			block.AddTxWithChain(b.getHeader, b.m.Engine, tx)
+			block.AddTxWithChain(b.getHeader, b.m.Engine, tx,
+				replication_adapter.Adapter{})
 		}
-		block.AddTxWithChain(b.getHeader, b.m.Engine, tx)
-	})
+		block.AddTxWithChain(b.getHeader, b.m.Engine, tx,
+			replication_adapter.Adapter{})
+	},
+		replication_adapter.Adapter{})
 	if err != nil {
 		return err
 	}
@@ -802,13 +811,13 @@ func (b *SimulatedBackend) AdjustTime(adjustment time.Duration) error {
 	if len(b.pendingBlock.Transactions()) != 0 {
 		return errors.New("could not adjust time on non-empty block")
 	}
-
+	//TODO: check don't we need write here also
 	chain, err := core.GenerateChain(b.m.ChainConfig, b.prependBlock, b.m.Engine, b.m.DB, 1, func(number int, block *core.BlockGen) {
 		for _, tx := range b.pendingBlock.Transactions() {
-			block.AddTxWithChain(b.getHeader, b.m.Engine, tx)
+			block.AddTxWithChain(b.getHeader, b.m.Engine, tx, replication_adapter.Adapter{})
 		}
 		block.OffsetTime(int64(adjustment.Seconds()))
-	})
+	}, replication_adapter.Adapter{})
 	if err != nil {
 		return err
 	}

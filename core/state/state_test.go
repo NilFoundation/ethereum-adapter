@@ -19,6 +19,7 @@ package state
 import (
 	"bytes"
 	"context"
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 	"testing"
 
 	"github.com/holiman/uint256"
@@ -55,15 +56,15 @@ func (s *StateSuite) TestDump(c *checker.C) {
 	obj3.SetBalance(uint256.NewInt(44))
 
 	// write some of them to the trie
-	err := s.w.UpdateAccountData(obj1.address, &obj1.data, new(accounts.Account), false)
+	err := s.w.UpdateAccountData(obj1.address, &obj1.data, new(accounts.Account), replication_adapter.Adapter{})
 	c.Check(err, checker.IsNil)
-	err = s.w.UpdateAccountData(obj2.address, &obj2.data, new(accounts.Account), false)
-	c.Check(err, checker.IsNil)
-
-	err = s.state.FinalizeTx(&chain.Rules{}, s.w)
+	err = s.w.UpdateAccountData(obj2.address, &obj2.data, new(accounts.Account), replication_adapter.Adapter{})
 	c.Check(err, checker.IsNil)
 
-	err = s.state.CommitBlock(&chain.Rules{}, s.w)
+	err = s.state.FinalizeTx(&chain.Rules{}, s.w, replication_adapter.Adapter{})
+	c.Check(err, checker.IsNil)
+
+	err = s.state.CommitBlock(&chain.Rules{}, s.w, replication_adapter.Adapter{})
 	c.Check(err, checker.IsNil)
 
 	// check that dump contains the state objects that are in trie
@@ -132,10 +133,10 @@ func (s *StateSuite) TestNull(c *checker.C) {
 
 	s.state.SetState(address, &common.Hash{}, value)
 
-	err := s.state.FinalizeTx(&chain.Rules{}, s.w)
+	err := s.state.FinalizeTx(&chain.Rules{}, s.w, replication_adapter.Adapter{})
 	c.Check(err, checker.IsNil)
 
-	err = s.state.CommitBlock(&chain.Rules{}, s.w)
+	err = s.state.CommitBlock(&chain.Rules{}, s.w, replication_adapter.Adapter{})
 	c.Check(err, checker.IsNil)
 
 	s.state.GetCommittedState(address, &common.Hash{}, &value)
@@ -147,12 +148,12 @@ func (s *StateSuite) TestNull(c *checker.C) {
 func (s *StateSuite) TestTouchDelete(c *checker.C) {
 	s.state.GetOrNewStateObject(common.Address{})
 
-	err := s.state.FinalizeTx(&chain.Rules{}, s.w)
+	err := s.state.FinalizeTx(&chain.Rules{}, s.w, replication_adapter.Adapter{})
 	if err != nil {
 		c.Fatal("error while finalize", err)
 	}
 
-	err = s.state.CommitBlock(&chain.Rules{}, s.w)
+	err = s.state.CommitBlock(&chain.Rules{}, s.w, replication_adapter.Adapter{})
 	if err != nil {
 		c.Fatal("error while commit", err)
 	}
@@ -232,13 +233,13 @@ func TestSnapshot2(t *testing.T) {
 	so0.deleted = false
 	state.setStateObject(stateobjaddr0, so0)
 
-	err := state.FinalizeTx(&chain.Rules{}, w)
+	err := state.FinalizeTx(&chain.Rules{}, w, replication_adapter.Adapter{})
 	if err != nil {
 		t.Fatal("error while finalizing transaction", err)
 	}
 	w = NewPlainState(tx, 2, nil)
 
-	err = state.CommitBlock(&chain.Rules{}, w)
+	err = state.CommitBlock(&chain.Rules{}, w, replication_adapter.Adapter{})
 	if err != nil {
 		t.Fatal("error while committing state", err)
 	}
@@ -338,22 +339,24 @@ func TestDump(t *testing.T) {
 	obj3.SetBalance(uint256.NewInt(44))
 
 	// write some of them to the trie
-	err := w.UpdateAccountData(obj1.address, &obj1.data, new(accounts.Account), false)
+	err := w.UpdateAccountData(obj1.address, &obj1.data, new(accounts.Account), replication_adapter.Adapter{})
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = w.UpdateAccountData(obj2.address, &obj2.data, new(accounts.Account), false)
+	err = w.UpdateAccountData(obj2.address, &obj2.data, new(accounts.Account), replication_adapter.Adapter{})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = state.FinalizeTx(&chain.Rules{}, w)
+	err = state.FinalizeTx(&chain.Rules{}, w,
+		replication_adapter.Adapter{})
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	blockWriter := NewPlainStateWriter(tx, tx, 1)
-	err = state.CommitBlock(&chain.Rules{}, blockWriter)
+	err = state.CommitBlock(&chain.Rules{}, blockWriter,
+		replication_adapter.Adapter{})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -2,6 +2,7 @@ package state
 
 import (
 	"fmt"
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 	"github.com/ledgerwatch/erigon-lib/kv/dbutils"
 	"math/rand"
 	"reflect"
@@ -36,7 +37,7 @@ func TestMutationDeleteTimestamp(t *testing.T) {
 	emptyAccount := accounts.NewAccount()
 	for i := range acc {
 		acc[i], addr[i] = randomAccount(t)
-		if err := blockWriter.UpdateAccountData(addr[i], &emptyAccount, acc[i], false); err != nil {
+		if err := blockWriter.UpdateAccountData(addr[i], &emptyAccount, acc[i], replication_adapter.Adapter{}); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -92,7 +93,7 @@ func TestMutationCommit(t *testing.T) {
 	numOfAccounts := 5
 	numOfStateKeys := 5
 
-	addrs, accState, accStateStorage, accHistory, accHistoryStateStorage := generateAccountsWithStorageAndHistory(t, NewPlainStateWriter(tx, tx, 2), numOfAccounts, numOfStateKeys, false)
+	addrs, accState, accStateStorage, accHistory, accHistoryStateStorage := generateAccountsWithStorageAndHistory(t, NewPlainStateWriter(tx, tx, 2), numOfAccounts, numOfStateKeys, replication_adapter.Adapter{})
 
 	for i, addr := range addrs {
 		acc, err := NewPlainStateReader(tx).ReadAccountData(addr)
@@ -246,7 +247,7 @@ func generateAccountsWithStorageAndHistory(t *testing.T, blockWriter *PlainState
 				t.Fatal(err)
 			}
 		}
-		if err := blockWriter.UpdateAccountData(addrs[i], accHistory[i], accState[i], false); err != nil {
+		if err := blockWriter.UpdateAccountData(addrs[i], accHistory[i], accState[i], replication_adapter.Adapter{}); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -344,7 +345,8 @@ func TestWalkAsOfStatePlain(t *testing.T) {
 			emptyVal,
 			block3Val,
 		},
-	})
+	},
+		replication_adapter.Adapter{})
 
 	writeStorageBlockData(t, NewPlainStateWriter(tx, tx, 5), []storageData{
 		{
@@ -368,7 +370,8 @@ func TestWalkAsOfStatePlain(t *testing.T) {
 			block3Val,
 			emptyVal,
 		},
-	})
+	},
+		replication_adapter.Adapter{})
 
 	block2 := &historyv2.ChangeSet{
 		Changes: make([]historyv2.Change, 0),
@@ -512,7 +515,8 @@ func TestWalkAsOfUsingFixedBytesStatePlain(t *testing.T) {
 			oldVal: emptyVal,
 			newVal: block3Val,
 		},
-	})
+	},
+		replication_adapter.Adapter{})
 
 	writeStorageBlockData(t, NewPlainStateWriter(tx, tx, 5), []storageData{
 		{
@@ -543,7 +547,8 @@ func TestWalkAsOfUsingFixedBytesStatePlain(t *testing.T) {
 			oldVal: block3Val,
 			newVal: stateVal,
 		},
-	})
+	},
+		replication_adapter.Adapter{})
 
 	block2 := &historyv2.ChangeSet{
 		Changes: make([]historyv2.Change, 0),
@@ -992,7 +997,8 @@ func TestWalkAsOfStoragePlain_WithChunks(t *testing.T) {
 			oldVal: emptyVal,
 			newVal: val,
 		},
-	})
+	},
+		replication_adapter.Adapter{})
 
 	prev := val
 	for i := 2; i < 1100; i++ {
@@ -1019,7 +1025,8 @@ func TestWalkAsOfStoragePlain_WithChunks(t *testing.T) {
 				oldVal: prev,
 				newVal: val,
 			},
-		})
+		},
+			replication_adapter.Adapter{})
 		prev = val
 	}
 
@@ -1047,7 +1054,8 @@ func TestWalkAsOfStoragePlain_WithChunks(t *testing.T) {
 			oldVal: prev,
 			newVal: val,
 		},
-	})
+	},
+		replication_adapter.Adapter{})
 
 	for _, blockNum := range []uint64{5, 100, 1000, 1050} {
 		obtained := &historyv2.ChangeSet{
@@ -1094,7 +1102,7 @@ type accData struct {
 func writeBlockData(t *testing.T, blockWriter *PlainStateWriter, data []accData) {
 	for i := range data {
 		if data[i].newVal != nil {
-			if err := blockWriter.UpdateAccountData(data[i].addr, data[i].oldVal, data[i].newVal, false); err != nil {
+			if err := blockWriter.UpdateAccountData(data[i].addr, data[i].oldVal, data[i].newVal, replication_adapter.Adapter{}); err != nil {
 				t.Fatal(err)
 			}
 		} else {

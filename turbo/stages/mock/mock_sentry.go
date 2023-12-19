@@ -692,7 +692,7 @@ func (ms *MockSentry) insertPoSBlocks(chain *core.ChainPack) error {
 
 	tipHash := chain.TopBlock.Hash()
 
-	status, lvh, err := wr.UpdateForkChoice(tipHash, tipHash, tipHash, replication_adapter.Adapter{})
+	status, lvh, err := wr.UpdateForkChoice(tipHash, tipHash, tipHash)
 
 	if err != nil {
 		return err
