@@ -3,6 +3,8 @@ package state
 import (
 	"encoding/binary"
 	"fmt"
+	"time"
+
 	replication_adapter "github.com/NilFoundation/replication-adapter"
 	"github.com/NilFoundation/replication-adapter-lib/core"
 	"github.com/holiman/uint256"
@@ -11,7 +13,6 @@ import (
 	"github.com/ledgerwatch/erigon-lib/kv/dbutils"
 	"github.com/ledgerwatch/erigon/core/types/accounts"
 	"github.com/ledgerwatch/erigon/turbo/shards"
-	"time"
 )
 
 var _ WriterWithChangeSets = (*PlainStateWriter)(nil)
@@ -59,7 +60,7 @@ func (w *PlainStateWriter) UpdateAccountData(address libcommon.Address, original
 	if adapter.IsWritable() {
 		op := core.BasicOperation[any]{
 			Type:        core.CreateBasicOp,
-			BlockNumber: core.BlockNumberType(w.csw.blockNumber),
+			BlockNumber: core.BlockNumber(w.csw.blockNumber),
 			Params: core.CreateParams{
 				AccountType: core.ExternallyOwnedAccount,
 				Address:     core.Address(address.String()),
@@ -81,7 +82,7 @@ func (w *PlainStateWriter) UpdateAccountData(address libcommon.Address, original
 		if resp.StatusCode == 500 {
 			op = core.BasicOperation[any]{
 				Type:        core.PutBasicOp,
-				BlockNumber: core.BlockNumberType(w.csw.blockNumber),
+				BlockNumber: core.BlockNumber(w.csw.blockNumber),
 				Params: core.PutAccountParams{
 					Address:     core.Address(address.String()),
 					Balance:     &account.Balance,
@@ -151,7 +152,7 @@ func (w *PlainStateWriter) WriteAccountStorage(address libcommon.Address, incarn
 	if adapter.IsWritable() {
 		op := core.BasicOperation[any]{
 			Type:        core.PutBasicOp,
-			BlockNumber: core.BlockNumberType(w.csw.blockNumber),
+			BlockNumber: core.BlockNumber(w.csw.blockNumber),
 			Params: core.PutStorageParams{
 				Address: core.Address(address.String()),
 				Chunks: []core.StorageChunk{

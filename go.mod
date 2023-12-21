@@ -4,13 +4,9 @@ go 1.21
 
 //toolchain go1.21.3
 
-replace github.com/NilFoundation/replication-adapter-lib => ../replication-adapter-lib
-
-replace github.com/NilFoundation/replication-adapter => ../replication-adapter
-
 require (
-	github.com/NilFoundation/replication-adapter v0.0.0-00010101000000-000000000000
-	github.com/NilFoundation/replication-adapter-lib v0.0.0-00010101000000-000000000000
+	github.com/NilFoundation/replication-adapter v0.0.0-20231229101921-c1ff406ca49a
+	github.com/NilFoundation/replication-adapter-lib v0.0.0-20231226104032-876378e946fd
 	github.com/rs/zerolog v1.31.0
 )
 

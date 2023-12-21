@@ -2,10 +2,11 @@ package caplin1
 
 import (
 	"context"
-	replication_adapter "github.com/NilFoundation/replication-adapter"
 	"os"
 	"path"
 	"time"
+
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 
 	proto_downloader "github.com/ledgerwatch/erigon-lib/gointerfaces/downloader"
 	"github.com/ledgerwatch/erigon/cl/antiquary"
