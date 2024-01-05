@@ -586,7 +586,7 @@ func (sd *StateDiff) UpdateAccountData(address libcommon.Address, original, acco
 	return nil
 }
 
-func (sd *StateDiff) UpdateAccountCode(address libcommon.Address, incarnation uint64, codeHash libcommon.Hash, code []byte) error {
+func (sd *StateDiff) UpdateAccountCode(address libcommon.Address, incarnation uint64, codeHash libcommon.Hash, code []byte, adapter replication_adapter.Adapter) error {
 	if _, ok := sd.sdMap[address]; !ok {
 		sd.sdMap[address] = &StateDiffAccount{Storage: make(map[libcommon.Hash]map[string]interface{})}
 	}

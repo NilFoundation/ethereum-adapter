@@ -28,8 +28,8 @@ func (cw *CachedWriter) UpdateAccountData(address common.Address, original, acco
 	return nil
 }
 
-func (cw *CachedWriter) UpdateAccountCode(address common.Address, incarnation uint64, codeHash common.Hash, code []byte) error {
-	if err := cw.w.UpdateAccountCode(address, incarnation, codeHash, code); err != nil {
+func (cw *CachedWriter) UpdateAccountCode(address common.Address, incarnation uint64, codeHash common.Hash, code []byte, adapter replication_adapter.Adapter) error {
+	if err := cw.w.UpdateAccountCode(address, incarnation, codeHash, code, adapter); err != nil {
 		return err
 	}
 	cw.cache.SetCodeWrite(address.Bytes(), incarnation, code)

@@ -780,7 +780,7 @@ func (w *StateWriterBufferedV3) UpdateAccountData(address common.Address, origin
 	return nil
 }
 
-func (w *StateWriterBufferedV3) UpdateAccountCode(address common.Address, incarnation uint64, codeHash common.Hash, code []byte) error {
+func (w *StateWriterBufferedV3) UpdateAccountCode(address common.Address, incarnation uint64, codeHash common.Hash, code []byte, adapter replication_adapter.Adapter) error {
 	addressBytes, codeHashBytes := address.Bytes(), codeHash.Bytes()
 	w.writeLists[kv.Code].Push(string(codeHashBytes), code)
 	if len(code) > 0 {

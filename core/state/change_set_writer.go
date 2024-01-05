@@ -92,7 +92,7 @@ func (w *ChangeSetWriter) UpdateAccountData(address libcommon.Address, original,
 	return nil
 }
 
-func (w *ChangeSetWriter) UpdateAccountCode(address libcommon.Address, incarnation uint64, codeHash libcommon.Hash, code []byte) error {
+func (w *ChangeSetWriter) UpdateAccountCode(address libcommon.Address, incarnation uint64, codeHash libcommon.Hash, code []byte, adapter replication_adapter.Adapter) error {
 	//fmt.Printf("code,%x,%x\n", address, code)
 	return nil
 }

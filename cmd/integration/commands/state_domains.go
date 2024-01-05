@@ -252,7 +252,7 @@ func (ww *WriterWrapper4) UpdateAccountData(address libcommon.Address, original,
 	return nil
 }
 
-func (ww *WriterWrapper4) UpdateAccountCode(address libcommon.Address, incarnation uint64, codeHash libcommon.Hash, code []byte) error {
+func (ww *WriterWrapper4) UpdateAccountCode(address libcommon.Address, incarnation uint64, codeHash libcommon.Hash, code []byte, adapter replication_adapter.Adapter) error {
 	if err := ww.w.UpdateAccountCode(address.Bytes(), code); err != nil {
 		return err
 	}

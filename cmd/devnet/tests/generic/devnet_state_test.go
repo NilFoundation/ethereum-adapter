@@ -68,6 +68,7 @@ func SendTx(ctx context.Context, to, from string, amount uint64) (libcommon.Hash
 }
 
 func TestReplication(t *testing.T) {
+	fmt.Println("Starting cluster")
 	runCtx, _ := tests.ContextStart(t, "")
 	ctx := runCtx.WithCurrentNetwork(0).WithCurrentNode(0)
 	node := devnet.SelectBlockProducer(ctx)

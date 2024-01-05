@@ -108,10 +108,10 @@ func (w *PlainStateWriter) UpdateAccountData(address libcommon.Address, original
 	return w.db.Put(kv.PlainState, address[:], value)
 }
 
-func (w *PlainStateWriter) UpdateAccountCode(address libcommon.Address, incarnation uint64, codeHash libcommon.Hash, code []byte) error {
+func (w *PlainStateWriter) UpdateAccountCode(address libcommon.Address, incarnation uint64, codeHash libcommon.Hash, code []byte, adapter replication_adapter.Adapter) error {
 	//fmt.Printf("code,%x,%x\n", address, code)
 	if w.csw != nil {
-		if err := w.csw.UpdateAccountCode(address, incarnation, codeHash, code); err != nil {
+		if err := w.csw.UpdateAccountCode(address, incarnation, codeHash, code, adapter); err != nil {
 			return err
 		}
 	}
@@ -120,6 +120,32 @@ func (w *PlainStateWriter) UpdateAccountCode(address libcommon.Address, incarnat
 	}
 	if err := w.db.Put(kv.Code, codeHash[:], code); err != nil {
 		return err
+	}
+	if adapter.IsWritable() {
+		op := core.BasicOperation[any]{
+			Type:        core.PutBasicOp,
+			BlockNumber: core.BlockNumber(w.csw.blockNumber),
+			Params: core.PutContractParams{
+				Address: core.Address(address.String()),
+				Code:    core.ContractCode(code),
+			},
+		}
+
+		resp, err := adapter.SendContractOperation(op)
+		problemConnection := false
+		for err != nil {
+			problemConnection = true
+			fmt.Printf("Sleep while write to State Keeper")
+			time.Sleep(time.Second * 1)
+			resp, err = adapter.SendContractOperation(op)
+		}
+		if problemConnection {
+			fmt.Println("Connected!")
+		}
+		if resp.StatusCode == 500 {
+			panic(resp.StatusCode)
+		}
+		_ = resp
 	}
 	return w.db.Put(kv.PlainContractCode, dbutils.PlainGenerateStoragePrefix(address[:], incarnation), codeHash[:])
 }

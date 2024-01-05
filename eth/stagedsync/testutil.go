@@ -169,7 +169,7 @@ func generateBlocks2(t *testing.T, from uint64, numberOfBlocks uint64, blockWrit
 					code := []byte(fmt.Sprintf("acc-code-%v", blockNumber))
 					codeHash, _ := libcommon.HashData(code)
 					if blockNumber >= from {
-						if err := blockWriter.UpdateAccountCode(addr, newAcc.Incarnation, codeHash, code); err != nil {
+						if err := blockWriter.UpdateAccountCode(addr, newAcc.Incarnation, codeHash, code, adapter); err != nil {
 							t.Fatal(err)
 						}
 					}
@@ -240,7 +240,7 @@ func generateBlocks(t *testing.T, from uint64, numberOfBlocks uint64, stateWrite
 					code := []byte(fmt.Sprintf("acc-code-%v", blockNumber))
 					codeHash, _ := libcommon.HashData(code)
 					if blockNumber >= from {
-						if err := blockWriter.UpdateAccountCode(addr, newAcc.Incarnation, codeHash, code); err != nil {
+						if err := blockWriter.UpdateAccountCode(addr, newAcc.Incarnation, codeHash, code, adapter); err != nil {
 							t.Fatal(err)
 						}
 					}

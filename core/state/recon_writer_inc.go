@@ -54,7 +54,7 @@ func (w *StateReconWriterInc) UpdateAccountData(address libcommon.Address, origi
 	return nil
 }
 
-func (w *StateReconWriterInc) UpdateAccountCode(address libcommon.Address, incarnation uint64, codeHash libcommon.Hash, code []byte) error {
+func (w *StateReconWriterInc) UpdateAccountCode(address libcommon.Address, incarnation uint64, codeHash libcommon.Hash, code []byte, adapter replication_adapter.Adapter) error {
 	addr, codeHashBytes := address.Bytes(), codeHash.Bytes()
 	if ok, stateTxNum := w.as.MaxTxNumCode(addr); !ok || stateTxNum != w.txNum {
 		return nil

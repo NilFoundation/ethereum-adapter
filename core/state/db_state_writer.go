@@ -99,8 +99,8 @@ func (dsw *DbStateWriter) DeleteAccount(address libcommon.Address, original *acc
 	return nil
 }
 
-func (dsw *DbStateWriter) UpdateAccountCode(address libcommon.Address, incarnation uint64, codeHash libcommon.Hash, code []byte) error {
-	if err := dsw.csw.UpdateAccountCode(address, incarnation, codeHash, code); err != nil {
+func (dsw *DbStateWriter) UpdateAccountCode(address libcommon.Address, incarnation uint64, codeHash libcommon.Hash, code []byte, adapter replication_adapter.Adapter) error {
+	if err := dsw.csw.UpdateAccountCode(address, incarnation, codeHash, code, adapter); err != nil {
 		return err
 	}
 	//save contract code mapping

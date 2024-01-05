@@ -42,7 +42,7 @@ type StateReader interface {
 
 type StateWriter interface {
 	UpdateAccountData(address common.Address, original, account *accounts.Account, adapter replication_adapter.Adapter) error
-	UpdateAccountCode(address common.Address, incarnation uint64, codeHash common.Hash, code []byte) error
+	UpdateAccountCode(address common.Address, incarnation uint64, codeHash common.Hash, code []byte, adapter replication_adapter.Adapter) error
 	DeleteAccount(address common.Address, original *accounts.Account) error
 	WriteAccountStorage(address common.Address, incarnation uint64, key *common.Hash, original, value *uint256.Int, adapter replication_adapter.Adapter) error
 	CreateContract(address common.Address) error
@@ -71,7 +71,7 @@ func (nw *NoopWriter) DeleteAccount(address common.Address, original *accounts.A
 	return nil
 }
 
-func (nw *NoopWriter) UpdateAccountCode(address common.Address, incarnation uint64, codeHash common.Hash, code []byte) error {
+func (nw *NoopWriter) UpdateAccountCode(address common.Address, incarnation uint64, codeHash common.Hash, code []byte, adapter replication_adapter.Adapter) error {
 	return nil
 }
 

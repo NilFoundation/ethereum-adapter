@@ -279,7 +279,7 @@ func (s *PlainState) DeleteAccount(address libcommon.Address, original *accounts
 	return nil
 }
 
-func (s *PlainState) UpdateAccountCode(address libcommon.Address, incarnation uint64, codeHash libcommon.Hash, code []byte) error {
+func (s *PlainState) UpdateAccountCode(address libcommon.Address, incarnation uint64, codeHash libcommon.Hash, code []byte, adapter replication_adapter.Adapter) error {
 	return nil
 }
 
