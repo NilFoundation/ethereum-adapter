@@ -102,7 +102,8 @@
 
             buildGoDir "./cmd/erigon"
 
-            buildTests "./cmd/devnet/tests/generic" "devnet_tests_generic"
+            buildTests "./cmd/devnet/tests/generic/devnet_state_test.go" "devnet_state_test"
+            buildTests "./cmd/devnet/tests/generic/devnet_infinite_run_test.go" "devnet_infinite_run_test"
           '';
         };
 
