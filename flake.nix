@@ -14,14 +14,14 @@
 
         replication-adapter-lib = builtins.fetchGit {
           url = "git@github.com:NilFoundation/replication-adapter-lib.git";
-          rev = "cfab0247cb9dbba4610227478c1bd0f019a802a6";
-          narHash = "sha256-s2EzlecLj62yVOzYCVJXrh77AxApg9oRRLC/zKN1uss=";
+          rev = "c583de36f7a539fc5fb7151773bff368c4872e1f";
+          narHash = "sha256-jxd7w+vszp9wLs/p0iSazKqHpJWdxZh4z3p7IL5lFII=";
         };
 
         replication-adapter = builtins.fetchGit {
           url = "git@github.com:NilFoundation/replication-adapter.git";
-          rev = "c1ff406ca49a24c6023b7cdb6c5ecb4d470e2ba6";
-          narHash = "sha256-LOo6BTLSIwEFU2gQLazysfbLrA8V30+3WSPNUvzgn1M=";
+          rev = "6db7506cb8cf0e6337a3494afcb79634962cf21f";
+          narHash = "sha256-n2kRpZxCBHIKbHyaS5QvSxUaepZgySpdkzTW/H6CR28=";
         };
 
       in rec
