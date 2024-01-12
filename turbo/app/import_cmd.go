@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 	"io"
 	"os"
 	"os/signal"
@@ -74,14 +75,14 @@ func importChain(cliCtx *cli.Context) error {
 		return err
 	}
 
-	if err := ImportChain(ethereum, ethereum.ChainDB(), cliCtx.Args().First(), logger); err != nil {
+	if err := ImportChain(ethereum, ethereum.ChainDB(), cliCtx.Args().First(), logger, ethCfg.ReplicationAdapter); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func ImportChain(ethereum *eth.Ethereum, chainDB kv.RwDB, fn string, logger log.Logger) error {
+func ImportChain(ethereum *eth.Ethereum, chainDB kv.RwDB, fn string, logger log.Logger, adapter replication_adapter.Adapter) error {
 	// Watch for Ctrl-C while the import is running.
 	// If a signal is received, the import will stop at the next batch.
 	interrupt := make(chan os.Signal, 1)
@@ -166,7 +167,7 @@ func ImportChain(ethereum *eth.Ethereum, chainDB kv.RwDB, fn string, logger log.
 			TopBlock: missing[len(missing)-1],
 		}
 
-		if err := InsertChain(ethereum, missingChain, logger); err != nil {
+		if err := InsertChain(ethereum, missingChain, logger, adapter); err != nil {
 			return err
 		}
 	}
@@ -208,7 +209,7 @@ func missingBlocks(chainDB kv.RwDB, blocks []*types.Block, blockReader services.
 	return nil
 }
 
-func InsertChain(ethereum *eth.Ethereum, chain *core.ChainPack, logger log.Logger) error {
+func InsertChain(ethereum *eth.Ethereum, chain *core.ChainPack, logger log.Logger, adapter replication_adapter.Adapter) error {
 	sentryControlServer := ethereum.SentryControlServer()
 	initialCycle := false
 
@@ -221,7 +222,7 @@ func InsertChain(ethereum *eth.Ethereum, chain *core.ChainPack, logger log.Logge
 	blockReader, _ := ethereum.BlockIO()
 
 	hook := stages.NewHook(ethereum.SentryCtx(), ethereum.ChainDB(), ethereum.Notifications(), ethereum.StagedSync(), blockReader, ethereum.ChainConfig(), logger, sentryControlServer.UpdateHead)
-	err := stages.StageLoopIteration(ethereum.SentryCtx(), ethereum.ChainDB(), nil, ethereum.StagedSync(), initialCycle, logger, blockReader, hook, false)
+	err := stages.StageLoopIteration(ethereum.SentryCtx(), ethereum.ChainDB(), nil, ethereum.StagedSync(), initialCycle, logger, blockReader, hook, false, adapter)
 	if err != nil {
 		return err
 	}

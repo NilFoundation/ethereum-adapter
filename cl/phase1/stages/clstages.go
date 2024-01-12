@@ -3,6 +3,7 @@ package stages
 import (
 	"context"
 	"errors"
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 	"runtime"
 	"time"
 
@@ -172,7 +173,7 @@ digraph {
 
 // ConsensusClStages creates a stage loop container to be used to run caplin
 func ConsensusClStages(ctx context.Context,
-	cfg *Cfg,
+	cfg *Cfg, adapter replication_adapter.Adapter,
 ) *clstages.StageGraph[*Cfg, Args] {
 	rpcSource := persistence.NewBeaconRpcSource(cfg.rpc)
 	gossipSource := persistence.NewGossipSource(ctx, cfg.gossipManager)
@@ -442,6 +443,7 @@ func ConsensusClStages(ctx context.Context,
 						if err := cfg.forkChoice.Engine().ForkChoiceUpdate(
 							cfg.forkChoice.GetEth1Hash(finalizedCheckpoint.BlockRoot()),
 							cfg.forkChoice.GetEth1Hash(headRoot),
+							adapter,
 						); err != nil {
 							logger.Warn("Could not set forkchoice", "err", err)
 							return err

@@ -287,7 +287,6 @@ type RoDB interface {
 //	}
 type RwDB interface {
 	RoDB
-
 	Update(ctx context.Context, f func(tx RwTx) error) error
 	UpdateNosync(ctx context.Context, f func(tx RwTx) error) error
 

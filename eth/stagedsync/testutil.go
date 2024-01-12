@@ -2,6 +2,7 @@ package stagedsync
 
 import (
 	"fmt"
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 	"math/big"
 	"testing"
 
@@ -127,7 +128,7 @@ func plainWriterGen(tx kv.RwTx) stateWriterGen {
 
 type testGenHook func(n, from, numberOfBlocks uint64)
 
-func generateBlocks2(t *testing.T, from uint64, numberOfBlocks uint64, blockWriter state.StateWriter, beforeBlock, afterBlock testGenHook, difficulty int) {
+func generateBlocks2(t *testing.T, from uint64, numberOfBlocks uint64, blockWriter state.StateWriter, beforeBlock, afterBlock testGenHook, difficulty int, adapter replication_adapter.Adapter) {
 	acc1 := accounts.NewAccount()
 	acc1.Incarnation = 1
 	acc1.Initialised = true
@@ -168,7 +169,7 @@ func generateBlocks2(t *testing.T, from uint64, numberOfBlocks uint64, blockWrit
 					code := []byte(fmt.Sprintf("acc-code-%v", blockNumber))
 					codeHash, _ := libcommon.HashData(code)
 					if blockNumber >= from {
-						if err := blockWriter.UpdateAccountCode(addr, newAcc.Incarnation, codeHash, code); err != nil {
+						if err := blockWriter.UpdateAccountCode(addr, newAcc.Incarnation, codeHash, code, adapter); err != nil {
 							t.Fatal(err)
 						}
 					}
@@ -182,13 +183,13 @@ func generateBlocks2(t *testing.T, from uint64, numberOfBlocks uint64, blockWrit
 				var location libcommon.Hash
 				location.SetBytes(big.NewInt(int64(blockNumber)).Bytes())
 				if blockNumber >= from {
-					if err := blockWriter.WriteAccountStorage(addr, newAcc.Incarnation, &location, &oldValue, &newValue); err != nil {
+					if err := blockWriter.WriteAccountStorage(addr, newAcc.Incarnation, &location, &oldValue, &newValue, adapter); err != nil {
 						t.Fatal(err)
 					}
 				}
 			}
 			if blockNumber >= from {
-				if err := blockWriter.UpdateAccountData(addr, oldAcc, newAcc); err != nil {
+				if err := blockWriter.UpdateAccountData(addr, oldAcc, newAcc, adapter); err != nil {
 					t.Fatal(err)
 				}
 			}
@@ -198,7 +199,7 @@ func generateBlocks2(t *testing.T, from uint64, numberOfBlocks uint64, blockWrit
 	}
 }
 
-func generateBlocks(t *testing.T, from uint64, numberOfBlocks uint64, stateWriterGen stateWriterGen, difficulty int) {
+func generateBlocks(t *testing.T, from uint64, numberOfBlocks uint64, stateWriterGen stateWriterGen, difficulty int, adapter replication_adapter.Adapter) {
 	acc1 := accounts.NewAccount()
 	acc1.Incarnation = 1
 	acc1.Initialised = true
@@ -239,7 +240,7 @@ func generateBlocks(t *testing.T, from uint64, numberOfBlocks uint64, stateWrite
 					code := []byte(fmt.Sprintf("acc-code-%v", blockNumber))
 					codeHash, _ := libcommon.HashData(code)
 					if blockNumber >= from {
-						if err := blockWriter.UpdateAccountCode(addr, newAcc.Incarnation, codeHash, code); err != nil {
+						if err := blockWriter.UpdateAccountCode(addr, newAcc.Incarnation, codeHash, code, adapter); err != nil {
 							t.Fatal(err)
 						}
 					}
@@ -253,13 +254,13 @@ func generateBlocks(t *testing.T, from uint64, numberOfBlocks uint64, stateWrite
 				var location libcommon.Hash
 				location.SetBytes(big.NewInt(int64(blockNumber)).Bytes())
 				if blockNumber >= from {
-					if err := blockWriter.WriteAccountStorage(addr, newAcc.Incarnation, &location, &oldValue, &newValue); err != nil {
+					if err := blockWriter.WriteAccountStorage(addr, newAcc.Incarnation, &location, &oldValue, &newValue, adapter); err != nil {
 						t.Fatal(err)
 					}
 				}
 			}
 			if blockNumber >= from {
-				if err := blockWriter.UpdateAccountData(addr, oldAcc, newAcc); err != nil {
+				if err := blockWriter.UpdateAccountData(addr, oldAcc, newAcc, adapter); err != nil {
 					t.Fatal(err)
 				}
 			}

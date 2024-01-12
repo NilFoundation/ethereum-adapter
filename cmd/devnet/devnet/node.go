@@ -23,6 +23,7 @@ import (
 
 type Node interface {
 	requests.RequestGenerator
+	IsAdapter() bool
 	GetName() string
 	ChainID() *big.Int
 	GetHttpPort() int
@@ -118,6 +119,10 @@ func (n *devnetNode) GetName() string {
 	return n.nodeArgs.GetName()
 }
 
+func (n *devnetNode) IsAdapter() bool {
+	return n.nodeArgs.IsAdapter()
+}
+
 func (n *devnetNode) ChainID() *big.Int {
 	return n.nodeArgs.ChainID()
 }
@@ -193,7 +198,7 @@ func (n *devnetNode) run(ctx *cli.Context) error {
 		return err
 	}
 
-	err = n.ethNode.Serve()
+	err = n.ethNode.Serve(n.ethCfg.ReplicationAdapter)
 
 	if err != nil {
 		logger.Error("error while serving Devnet node", "err", err)

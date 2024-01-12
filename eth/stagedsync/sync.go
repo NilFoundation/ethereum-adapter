@@ -3,6 +3,7 @@ package stagedsync
 import (
 	"context"
 	"fmt"
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 	"time"
 
 	libcommon "github.com/ledgerwatch/erigon-lib/common"
@@ -217,7 +218,7 @@ func (s *Sync) RunUnwind(db kv.RwDB, tx kv.RwTx) error {
 	return nil
 }
 
-func (s *Sync) RunNoInterrupt(db kv.RwDB, tx kv.RwTx, firstCycle bool) error {
+func (s *Sync) RunNoInterrupt(db kv.RwDB, tx kv.RwTx, firstCycle bool, adapter replication_adapter.Adapter) error {
 	s.prevUnwindPoint = nil
 	s.timings = s.timings[:0]
 

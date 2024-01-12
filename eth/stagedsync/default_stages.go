@@ -2,6 +2,7 @@ package stagedsync
 
 import (
 	"context"
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 
 	"github.com/ledgerwatch/erigon-lib/kv"
 	"github.com/ledgerwatch/erigon/eth/ethconfig"
@@ -24,7 +25,8 @@ func DefaultStages(ctx context.Context,
 	callTraces CallTracesCfg,
 	txLookup TxLookupCfg,
 	finish FinishCfg,
-	test bool) []*Stage {
+	test bool,
+	adapter replication_adapter.Adapter) []*Stage {
 	return []*Stage{
 		{
 			ID:          stages.Snapshots,
@@ -117,7 +119,7 @@ func DefaultStages(ctx context.Context,
 			ID:          stages.Execution,
 			Description: "Execute blocks w/o hash checks",
 			Forward: func(firstCycle bool, badBlockUnwind bool, s *StageState, u Unwinder, tx kv.RwTx, logger log.Logger) error {
-				return SpawnExecuteBlocksStage(s, u, tx, 0, ctx, exec, firstCycle, logger)
+				return SpawnExecuteBlocksStage(s, u, tx, 0, ctx, exec, firstCycle, logger, adapter)
 			},
 			Unwind: func(firstCycle bool, u *UnwindState, s *StageState, tx kv.RwTx, logger log.Logger) error {
 				return UnwindExecutionStage(u, s, tx, ctx, exec, firstCycle, logger)
@@ -248,7 +250,7 @@ func DefaultStages(ctx context.Context,
 	}
 }
 
-func PipelineStages(ctx context.Context, snapshots SnapshotsCfg, blockHashCfg BlockHashesCfg, senders SendersCfg, exec ExecuteBlockCfg, hashState HashStateCfg, trieCfg TrieCfg, history HistoryCfg, logIndex LogIndexCfg, callTraces CallTracesCfg, txLookup TxLookupCfg, finish FinishCfg, test bool) []*Stage {
+func PipelineStages(ctx context.Context, snapshots SnapshotsCfg, blockHashCfg BlockHashesCfg, senders SendersCfg, exec ExecuteBlockCfg, hashState HashStateCfg, trieCfg TrieCfg, history HistoryCfg, logIndex LogIndexCfg, callTraces CallTracesCfg, txLookup TxLookupCfg, finish FinishCfg, test bool, adapter replication_adapter.Adapter) []*Stage {
 	return []*Stage{
 		{
 			ID:          stages.Snapshots,
@@ -296,7 +298,7 @@ func PipelineStages(ctx context.Context, snapshots SnapshotsCfg, blockHashCfg Bl
 			ID:          stages.Execution,
 			Description: "Execute blocks w/o hash checks",
 			Forward: func(firstCycle bool, badBlockUnwind bool, s *StageState, u Unwinder, tx kv.RwTx, logger log.Logger) error {
-				return SpawnExecuteBlocksStage(s, u, tx, 0, ctx, exec, firstCycle, logger)
+				return SpawnExecuteBlocksStage(s, u, tx, 0, ctx, exec, firstCycle, logger, adapter)
 			},
 			Unwind: func(firstCycle bool, u *UnwindState, s *StageState, tx kv.RwTx, logger log.Logger) error {
 				return UnwindExecutionStage(u, s, tx, ctx, exec, firstCycle, logger)
@@ -428,7 +430,7 @@ func PipelineStages(ctx context.Context, snapshots SnapshotsCfg, blockHashCfg Bl
 }
 
 // StateStages are all stages necessary for basic unwind and stage computation, it is primarily used to process side forks and memory execution.
-func StateStages(ctx context.Context, headers HeadersCfg, bodies BodiesCfg, blockHashCfg BlockHashesCfg, senders SendersCfg, exec ExecuteBlockCfg, hashState HashStateCfg, trieCfg TrieCfg) []*Stage {
+func StateStages(ctx context.Context, headers HeadersCfg, bodies BodiesCfg, blockHashCfg BlockHashesCfg, senders SendersCfg, exec ExecuteBlockCfg, hashState HashStateCfg, trieCfg TrieCfg, adapter replication_adapter.Adapter) []*Stage {
 	return []*Stage{
 		{
 			ID:          stages.Headers,
@@ -474,7 +476,7 @@ func StateStages(ctx context.Context, headers HeadersCfg, bodies BodiesCfg, bloc
 			ID:          stages.Execution,
 			Description: "Execute blocks w/o hash checks",
 			Forward: func(firstCycle bool, badBlockUnwind bool, s *StageState, u Unwinder, tx kv.RwTx, logger log.Logger) error {
-				return SpawnExecuteBlocksStage(s, u, tx, 0, ctx, exec, firstCycle, logger)
+				return SpawnExecuteBlocksStage(s, u, tx, 0, ctx, exec, firstCycle, logger, adapter)
 			},
 			Unwind: func(firstCycle bool, u *UnwindState, s *StageState, tx kv.RwTx, logger log.Logger) error {
 				return UnwindExecutionStage(u, s, tx, ctx, exec, firstCycle, logger)

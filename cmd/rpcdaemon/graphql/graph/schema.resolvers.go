@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 	"github.com/ledgerwatch/erigon-lib/common/hexutil"
 	"strconv"
 	"strings"
@@ -23,7 +24,7 @@ func (r *mutationResolver) SendRawTransaction(ctx context.Context, data string) 
 }
 
 // Block is the resolver for the block field.
-func (r *queryResolver) Block(ctx context.Context, number *string, hash *string) (*model.Block, error) {
+func (r *queryResolver) Block(ctx context.Context, number *string, hash *string, adapter replication_adapter.Adapter) (*model.Block, error) {
 	var blockNumber rpc.BlockNumber
 
 	if number != nil {
@@ -61,8 +62,7 @@ func (r *queryResolver) Block(ctx context.Context, number *string, hash *string)
 		*/
 		blockNumber = rpc.LatestBlockNumber
 	}
-
-	res, err := r.GraphQLAPI.GetBlockDetails(ctx, blockNumber)
+	res, err := r.GraphQLAPI.GetBlockDetails(ctx, blockNumber, adapter)
 	if err != nil {
 		fmt.Println(err)
 		return nil, err

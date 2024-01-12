@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -98,7 +99,7 @@ func New(ctx context.Context, conf *nodecfg.Config, logger log.Logger) (*Node, e
 
 // Start starts all registered lifecycles, RPC services and p2p networking.
 // Node can only be started once.
-func (n *Node) Start() error {
+func (n *Node) Start(adapter replication_adapter.Adapter) error {
 	n.startStopLock.Lock()
 	defer n.startStopLock.Unlock()
 
@@ -121,7 +122,7 @@ func (n *Node) Start() error {
 	var started []Lifecycle //nolint:prealloc
 	var err error
 	for _, lifecycle := range lifecycles {
-		if err = lifecycle.Start(); err != nil {
+		if err = lifecycle.Start(adapter); err != nil {
 			break
 		}
 		started = append(started, lifecycle)
@@ -409,8 +410,8 @@ func (n *Node) ResolvePath(x string) string {
 	return n.config.ResolvePath(x)
 }
 
-func StartNode(stack *Node) {
-	if err := stack.Start(); err != nil {
+func StartNode(stack *Node, adapter replication_adapter.Adapter) {
+	if err := stack.Start(adapter); err != nil {
 		utils.Fatalf("Error starting protocol stack: %v", err)
 	}
 

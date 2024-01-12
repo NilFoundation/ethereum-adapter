@@ -20,11 +20,15 @@ package utils
 import (
 	"crypto/ecdsa"
 	"fmt"
+	replication_adapter "github.com/NilFoundation/replication-adapter"
+	"github.com/rs/zerolog"
 	"math/big"
+	"os"
 	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/ledgerwatch/erigon/cl/clparams"
 
@@ -862,6 +866,16 @@ var (
 		Name:  "silkworm.sentry",
 		Usage: "Enable embedded Silkworm Sentry service",
 	}
+	ReplicationAdapterFlag = cli.BoolFlag{
+		Name:  "adapter.enable",
+		Usage: "Enable replication into state-keeper",
+		Value: false,
+	}
+	ReplicationAdapterAddrFlag = cli.StringFlag{
+		Name:  "adapter.addr",
+		Usage: "Address for state-keeper with port",
+		Value: "http://localhost:9999",
+	}
 )
 
 var MetricFlags = []cli.Flag{&MetricsEnabledFlag, &MetricsHTTPFlag, &MetricsPortFlag}
@@ -1491,6 +1505,21 @@ func setSilkworm(ctx *cli.Context, cfg *ethconfig.Config) {
 	cfg.SilkwormSentry = ctx.Bool(SilkwormSentryFlag.Name)
 }
 
+func setAdapter(ctx *cli.Context, cfg *ethconfig.Config) {
+	isWritableAdapter := ctx.Bool(ReplicationAdapterFlag.Name)
+	var logger = zerolog.New(zerolog.ConsoleWriter{
+		Out:        os.Stderr,
+		TimeFormat: time.DateTime,
+	}).
+		Level(zerolog.DebugLevel).
+		With().
+		Caller().
+		Timestamp().
+		Logger()
+	cfg.ReplicationAdapterAddr = ctx.String(ReplicationAdapterAddrFlag.Name)
+	cfg.ReplicationAdapter = replication_adapter.NewAdapter(cfg.ReplicationAdapterAddr, isWritableAdapter, logger)
+}
+
 // CheckExclusive verifies that only a single instance of the provided flags was
 // set by the user. Each flag might optionally be followed by a string type to
 // specialize it further.
@@ -1599,6 +1628,7 @@ func SetEthConfig(ctx *cli.Context, nodeConfig *nodecfg.Config, cfg *ethconfig.C
 	setWhitelist(ctx, cfg)
 	setBorConfig(ctx, cfg)
 	setSilkworm(ctx, cfg)
+	setAdapter(ctx, cfg)
 
 	cfg.Ethstats = ctx.String(EthStatsURLFlag.Name)
 	cfg.HistoryV3 = ctx.Bool(HistoryV3Flag.Name)

@@ -21,6 +21,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 	"math/big"
 	"strconv"
 	"strings"
@@ -182,7 +183,7 @@ func (t *StateTest) RunNoVerify(tx kv.RwTx, subtest StateSubtest, vmconfig vm.Co
 		return nil, libcommon.Hash{}, UnsupportedForkError{subtest.Fork}
 	}
 	vmconfig.ExtraEips = eips
-	block, _, err := core.GenesisToBlock(t.genesis(config), "")
+	block, _, err := core.GenesisToBlock(t.genesis(config), "", replication_adapter.Adapter{})
 	if err != nil {
 		return nil, libcommon.Hash{}, UnsupportedForkError{subtest.Fork}
 	}
@@ -253,10 +254,10 @@ func (t *StateTest) RunNoVerify(tx kv.RwTx, subtest StateSubtest, vmconfig vm.Co
 		statedb.RevertToSnapshot(snapshot)
 	}
 
-	if err = statedb.FinalizeTx(evm.ChainRules(), w); err != nil {
+	if err = statedb.FinalizeTx(evm.ChainRules(), w, replication_adapter.Adapter{}); err != nil {
 		return nil, libcommon.Hash{}, err
 	}
-	if err = statedb.CommitBlock(evm.ChainRules(), w); err != nil {
+	if err = statedb.CommitBlock(evm.ChainRules(), w, replication_adapter.Adapter{}); err != nil {
 		return nil, libcommon.Hash{}, err
 	}
 	// Generate hashed state
@@ -341,10 +342,10 @@ func MakePreState(rules *chain.Rules, tx kv.RwTx, accounts types.GenesisAlloc, b
 		w = state.NewPlainStateWriter(tx, nil, blockNr+1)
 	}
 	// Commit and re-open to start with a clean state.
-	if err := statedb.FinalizeTx(rules, w); err != nil {
+	if err := statedb.FinalizeTx(rules, w, replication_adapter.Adapter{}); err != nil {
 		return nil, err
 	}
-	if err := statedb.CommitBlock(rules, w); err != nil {
+	if err := statedb.CommitBlock(rules, w, replication_adapter.Adapter{}); err != nil {
 		return nil, err
 	}
 	return statedb, nil

@@ -2,12 +2,15 @@ package state
 
 import (
 	"encoding/binary"
-	"github.com/ledgerwatch/erigon-lib/kv/dbutils"
+	"fmt"
+	"time"
 
+	replication_adapter "github.com/NilFoundation/replication-adapter"
+	"github.com/NilFoundation/replication-adapter-lib/core"
 	"github.com/holiman/uint256"
 	libcommon "github.com/ledgerwatch/erigon-lib/common"
 	"github.com/ledgerwatch/erigon-lib/kv"
-
+	"github.com/ledgerwatch/erigon-lib/kv/dbutils"
 	"github.com/ledgerwatch/erigon/core/types/accounts"
 	"github.com/ledgerwatch/erigon/turbo/shards"
 )
@@ -43,10 +46,9 @@ func (w *PlainStateWriter) SetAccumulator(accumulator *shards.Accumulator) *Plai
 	return w
 }
 
-func (w *PlainStateWriter) UpdateAccountData(address libcommon.Address, original, account *accounts.Account) error {
-	//fmt.Printf("balance,%x,%d\n", address, &account.Balance)
+func (w *PlainStateWriter) UpdateAccountData(address libcommon.Address, original, account *accounts.Account, adapter replication_adapter.Adapter) error {
 	if w.csw != nil {
-		if err := w.csw.UpdateAccountData(address, original, account); err != nil {
+		if err := w.csw.UpdateAccountData(address, original, account, adapter); err != nil {
 			return err
 		}
 	}
@@ -55,14 +57,61 @@ func (w *PlainStateWriter) UpdateAccountData(address libcommon.Address, original
 	if w.accumulator != nil {
 		w.accumulator.ChangeAccount(address, account.Incarnation, value)
 	}
-
+	if adapter.IsWritable() {
+		op := core.BasicOperation[any]{
+			Type:        core.CreateBasicOp,
+			BlockNumber: core.BlockNumber(w.csw.blockNumber),
+			Params: core.CreateParams{
+				AccountType: core.ExternallyOwnedAccount,
+				Address:     core.Address(address.String()),
+				CodeHash:    core.Hash(account.CodeHash),
+				StorageRoot: core.Hash(account.Root),
+			},
+		}
+		resp, err := adapter.SendAccountOperation(op)
+		problemConnection := false
+		for err != nil {
+			problemConnection = true
+			fmt.Println("Sleep while write to State Keeper")
+			time.Sleep(time.Second * 1)
+			resp, err = adapter.SendAccountOperation(op)
+		}
+		if problemConnection {
+			fmt.Println("Connected!")
+		}
+		if resp.StatusCode == 500 {
+			op = core.BasicOperation[any]{
+				Type:        core.PutBasicOp,
+				BlockNumber: core.BlockNumber(w.csw.blockNumber),
+				Params: core.PutAccountParams{
+					Address:     core.Address(address.String()),
+					Balance:     &account.Balance,
+					StorageRoot: core.Hash(account.Root),
+				},
+			}
+			resp, err = adapter.SendAccountOperation(op)
+			problemConnection = false
+			for err != nil {
+				problemConnection = true
+				fmt.Println("Sleep while write to State Keeper")
+				time.Sleep(time.Second * 1)
+				resp, err = adapter.SendAccountOperation(op)
+			}
+			if problemConnection {
+				fmt.Println("Connected!")
+			}
+			if resp.StatusCode == 500 {
+				panic(resp.StatusCode)
+			}
+		}
+	}
 	return w.db.Put(kv.PlainState, address[:], value)
 }
 
-func (w *PlainStateWriter) UpdateAccountCode(address libcommon.Address, incarnation uint64, codeHash libcommon.Hash, code []byte) error {
+func (w *PlainStateWriter) UpdateAccountCode(address libcommon.Address, incarnation uint64, codeHash libcommon.Hash, code []byte, adapter replication_adapter.Adapter) error {
 	//fmt.Printf("code,%x,%x\n", address, code)
 	if w.csw != nil {
-		if err := w.csw.UpdateAccountCode(address, incarnation, codeHash, code); err != nil {
+		if err := w.csw.UpdateAccountCode(address, incarnation, codeHash, code, adapter); err != nil {
 			return err
 		}
 	}
@@ -71,6 +120,32 @@ func (w *PlainStateWriter) UpdateAccountCode(address libcommon.Address, incarnat
 	}
 	if err := w.db.Put(kv.Code, codeHash[:], code); err != nil {
 		return err
+	}
+	if adapter.IsWritable() {
+		op := core.BasicOperation[any]{
+			Type:        core.PutBasicOp,
+			BlockNumber: core.BlockNumber(w.csw.blockNumber),
+			Params: core.PutContractParams{
+				Address: core.Address(address.String()),
+				Code:    core.ContractCode(code),
+			},
+		}
+
+		resp, err := adapter.SendContractOperation(op)
+		problemConnection := false
+		for err != nil {
+			problemConnection = true
+			fmt.Printf("Sleep while write to State Keeper")
+			time.Sleep(time.Second * 1)
+			resp, err = adapter.SendContractOperation(op)
+		}
+		if problemConnection {
+			fmt.Println("Connected!")
+		}
+		if resp.StatusCode == 500 {
+			panic(resp.StatusCode)
+		}
+		_ = resp
 	}
 	return w.db.Put(kv.PlainContractCode, dbutils.PlainGenerateStoragePrefix(address[:], incarnation), codeHash[:])
 }
@@ -98,10 +173,39 @@ func (w *PlainStateWriter) DeleteAccount(address libcommon.Address, original *ac
 	return nil
 }
 
-func (w *PlainStateWriter) WriteAccountStorage(address libcommon.Address, incarnation uint64, key *libcommon.Hash, original, value *uint256.Int) error {
+func (w *PlainStateWriter) WriteAccountStorage(address libcommon.Address, incarnation uint64, key *libcommon.Hash, original, value *uint256.Int, adapter replication_adapter.Adapter) error {
 	//fmt.Printf("storage,%x,%x,%x\n", address, *key, value.Bytes())
+	if adapter.IsWritable() {
+		op := core.BasicOperation[any]{
+			Type:        core.PutBasicOp,
+			BlockNumber: core.BlockNumber(w.csw.blockNumber),
+			Params: core.PutStorageParams{
+				Address: core.Address(address.String()),
+				Chunks: []core.StorageChunk{
+					{core.Address(key.String()), value.Bytes32()},
+				},
+			},
+		}
+
+		resp, err := adapter.SendStorageOperation(op)
+		problemConnection := false
+		for err != nil {
+			problemConnection = true
+			fmt.Printf("Sleep while write to State Keeper")
+			time.Sleep(time.Second * 1)
+			resp, err = adapter.SendStorageOperation(op)
+		}
+		if problemConnection {
+			fmt.Println("Connected!")
+		}
+		if resp.StatusCode == 500 {
+			panic(resp.StatusCode)
+		}
+		_ = resp
+	}
+
 	if w.csw != nil {
-		if err := w.csw.WriteAccountStorage(address, incarnation, key, original, value); err != nil {
+		if err := w.csw.WriteAccountStorage(address, incarnation, key, original, value, adapter); err != nil {
 			return err
 		}
 	}

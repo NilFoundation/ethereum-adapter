@@ -39,6 +39,7 @@ func testDbAndAggregatorBench(b *testing.B, aggStep uint64) (string, kv.RwDB, *A
 }
 
 func BenchmarkAggregator_Processing(b *testing.B) {
+	isAdapter := false
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -68,7 +69,7 @@ func BenchmarkAggregator_Processing(b *testing.B) {
 		val := <-vals
 		txNum := uint64(i)
 		agg.SetTxNum(txNum)
-		err := agg.WriteAccountStorage(key[:length.Addr], key[length.Addr:], val)
+		err := agg.WriteAccountStorage(key[:length.Addr], key[length.Addr:], val, adapter)
 		require.NoError(b, err)
 		err = agg.FinishTx()
 		require.NoError(b, err)

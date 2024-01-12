@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 	"os"
 
 	"github.com/ledgerwatch/erigon/core/types"
@@ -65,7 +66,8 @@ func initGenesis(cliCtx *cli.Context) error {
 	if err != nil {
 		utils.Fatalf("Failed to open database: %v", err)
 	}
-	_, hash, err := core.CommitGenesisBlock(chaindb, genesis, "", logger)
+	//TODO: Understand do we need here write to state-keeper changes or not
+	_, hash, err := core.CommitGenesisBlock(chaindb, genesis, "", logger, replication_adapter.Adapter{})
 	if err != nil {
 		utils.Fatalf("Failed to write genesis block: %v", err)
 	}

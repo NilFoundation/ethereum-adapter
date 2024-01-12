@@ -107,6 +107,7 @@ func DeployContract(opts *TransactOpts, abi abi.ABI, bytecode []byte, backend Co
 	if err != nil {
 		return libcommon.Address{}, nil, nil, err
 	}
+
 	tx, err := c.transact(opts, nil, append(bytecode, input...))
 	if err != nil {
 		return libcommon.Address{}, nil, nil, err

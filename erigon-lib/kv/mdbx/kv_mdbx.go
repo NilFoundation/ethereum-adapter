@@ -440,7 +440,6 @@ type MdbxKV struct {
 	txSize       uint64
 	closed       atomic.Bool
 	path         string
-
 	leakDetector *dbg.LeakDetector
 }
 

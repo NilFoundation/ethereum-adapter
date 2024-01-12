@@ -170,5 +170,8 @@ var DefaultFlags = []cli.Flag{
 	&utils.SilkwormRpcDaemonFlag,
 	&utils.SilkwormSentryFlag,
 
+	&utils.ReplicationAdapterFlag,
+	&utils.ReplicationAdapterAddrFlag,
+
 	&utils.TrustedSetupFile,
 }

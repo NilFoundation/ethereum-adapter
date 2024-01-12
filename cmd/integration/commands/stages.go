@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -952,7 +953,8 @@ func stageExec(db kv.RwDB, ctx context.Context, logger log.Logger) error {
 		return nil
 	}
 
-	err := stagedsync.SpawnExecuteBlocksStage(s, sync, tx, block, ctx, cfg, true /* initialCycle */, logger)
+	//TODO: check don't we need write here also
+	err := stagedsync.SpawnExecuteBlocksStage(s, sync, tx, block, ctx, cfg, true /* initialCycle */, logger, replication_adapter.Adapter{})
 	if err != nil {
 		return err
 	}
@@ -1465,7 +1467,8 @@ func newDomains(ctx context.Context, db kv.RwDB, stepSize uint64, mode libstate.
 	//events := shards.NewEvents()
 	genesis := core.GenesisBlockByChainName(chain)
 
-	chainConfig, genesisBlock, genesisErr := core.CommitGenesisBlock(db, genesis, "", logger)
+	//TODO: check don't we need write here also
+	chainConfig, genesisBlock, genesisErr := core.CommitGenesisBlock(db, genesis, "", logger, replication_adapter.Adapter{})
 	_ = genesisBlock // TODO apply if needed here
 
 	if _, ok := genesisErr.(*chain2.ConfigCompatError); genesisErr != nil && !ok {
@@ -1505,7 +1508,8 @@ func newSync(ctx context.Context, db kv.RwDB, miningConfig *params.MiningConfig,
 	events := shards.NewEvents()
 
 	genesis := core.GenesisBlockByChainName(chain)
-	chainConfig, genesisBlock, genesisErr := core.CommitGenesisBlock(db, genesis, "", logger)
+	//TODO: check don't we need write here also
+	chainConfig, genesisBlock, genesisErr := core.CommitGenesisBlock(db, genesis, "", logger, replication_adapter.Adapter{})
 	if _, ok := genesisErr.(*chain2.ConfigCompatError); genesisErr != nil && !ok {
 		panic(genesisErr)
 	}
@@ -1566,8 +1570,10 @@ func newSync(ctx context.Context, db kv.RwDB, miningConfig *params.MiningConfig,
 		recents = bor.Recents
 		signatures = bor.Signatures
 	}
+
+	//TODO: check don't we need write here also
 	stages := stages2.NewDefaultStages(context.Background(), db, snapDb, p2p.Config{}, &cfg, sentryControlServer, notifications, nil, blockReader, blockRetire, agg, nil, nil,
-		heimdallClient, recents, signatures, logger)
+		heimdallClient, recents, signatures, logger, replication_adapter.Adapter{})
 	sync := stagedsync.New(stages, stagedsync.DefaultUnwindOrder, stagedsync.DefaultPruneOrder, logger)
 
 	miner := stagedsync.NewMiningState(&cfg.Miner)
@@ -1577,6 +1583,7 @@ func newSync(ctx context.Context, db kv.RwDB, miningConfig *params.MiningConfig,
 		close(miningCancel)
 	}()
 
+	//TODO: check don't we need write here also
 	miningSync := stagedsync.New(
 		stagedsync.MiningStages(ctx,
 			stagedsync.StageMiningCreateBlockCfg(db, miner, *chainConfig, engine, nil, nil, dirs.Tmp, blockReader),
@@ -1585,6 +1592,7 @@ func newSync(ctx context.Context, db kv.RwDB, miningConfig *params.MiningConfig,
 			stagedsync.StageHashStateCfg(db, dirs, historyV3),
 			stagedsync.StageTrieCfg(db, false, true, false, dirs.Tmp, blockReader, nil, historyV3, agg),
 			stagedsync.StageMiningFinishCfg(db, *chainConfig, engine, miner, miningCancel, blockReader, builder.NewLatestBlockBuiltStore()),
+			replication_adapter.Adapter{},
 		),
 		stagedsync.MiningUnwindOrder,
 		stagedsync.MiningPruneOrder,

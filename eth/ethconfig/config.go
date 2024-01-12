@@ -18,6 +18,7 @@
 package ethconfig
 
 import (
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 	"math/big"
 	"os"
 	"os/user"
@@ -256,6 +257,9 @@ type Config struct {
 	SilkwormExecution bool
 	SilkwormRpcDaemon bool
 	SilkwormSentry    bool
+
+	ReplicationAdapter     replication_adapter.Adapter
+	ReplicationAdapterAddr string
 }
 
 type Sync struct {

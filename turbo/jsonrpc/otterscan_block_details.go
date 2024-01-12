@@ -3,6 +3,7 @@ package jsonrpc
 import (
 	"context"
 	"fmt"
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 	"github.com/ledgerwatch/erigon-lib/common/hexutil"
 
 	"github.com/ledgerwatch/erigon-lib/common"
@@ -13,7 +14,7 @@ import (
 	"github.com/ledgerwatch/erigon/rpc"
 )
 
-func (api *OtterscanAPIImpl) GetBlockDetails(ctx context.Context, number rpc.BlockNumber) (map[string]interface{}, error) {
+func (api *OtterscanAPIImpl) GetBlockDetails(ctx context.Context, number rpc.BlockNumber, adapter replication_adapter.Adapter) (map[string]interface{}, error) {
 	tx, err := api.db.BeginRo(ctx)
 	if err != nil {
 		return nil, err
@@ -28,10 +29,10 @@ func (api *OtterscanAPIImpl) GetBlockDetails(ctx context.Context, number rpc.Blo
 		return nil, nil
 	}
 
-	return api.getBlockDetailsImpl(ctx, tx, b, number, senders)
+	return api.getBlockDetailsImpl(ctx, tx, b, number, senders, adapter)
 }
 
-func (api *OtterscanAPIImpl) GetBlockDetailsByHash(ctx context.Context, hash common.Hash) (map[string]interface{}, error) {
+func (api *OtterscanAPIImpl) GetBlockDetailsByHash(ctx context.Context, hash common.Hash, adapter replication_adapter.Adapter) (map[string]interface{}, error) {
 	tx, err := api.db.BeginRo(ctx)
 	if err != nil {
 		return nil, err
@@ -52,10 +53,10 @@ func (api *OtterscanAPIImpl) GetBlockDetailsByHash(ctx context.Context, hash com
 	}
 	number := rpc.BlockNumber(b.Number().Int64())
 
-	return api.getBlockDetailsImpl(ctx, tx, b, number, senders)
+	return api.getBlockDetailsImpl(ctx, tx, b, number, senders, adapter)
 }
 
-func (api *OtterscanAPIImpl) getBlockDetailsImpl(ctx context.Context, tx kv.Tx, b *types.Block, number rpc.BlockNumber, senders []common.Address) (map[string]interface{}, error) {
+func (api *OtterscanAPIImpl) getBlockDetailsImpl(ctx context.Context, tx kv.Tx, b *types.Block, number rpc.BlockNumber, senders []common.Address, adapter replication_adapter.Adapter) (map[string]interface{}, error) {
 	chainConfig, err := api.chainConfig(tx)
 	if err != nil {
 		return nil, err
@@ -69,7 +70,7 @@ func (api *OtterscanAPIImpl) getBlockDetailsImpl(ctx context.Context, tx kv.Tx, 
 	if err != nil {
 		return nil, err
 	}
-	receipts, err := api.getReceipts(ctx, tx, chainConfig, b, senders)
+	receipts, err := api.getReceipts(ctx, tx, chainConfig, b, senders, adapter)
 	if err != nil {
 		return nil, fmt.Errorf("getReceipts error: %v", err)
 	}

@@ -87,7 +87,7 @@ func runErigon(cliCtx *cli.Context) error {
 		diagnostics.Setup(cliCtx, metricsMux, ethNode)
 	}
 
-	err = ethNode.Serve()
+	err = ethNode.Serve(ethCfg.ReplicationAdapter)
 	if err != nil {
 		log.Error("error while serving an Erigon node", "err", err)
 	}

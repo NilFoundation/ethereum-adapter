@@ -2,6 +2,7 @@ package state
 
 import (
 	"bytes"
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 	"github.com/ledgerwatch/erigon-lib/kv/dbutils"
 
 	"github.com/holiman/uint256"
@@ -39,7 +40,7 @@ func (w *StateReconWriterInc) SetChainTx(chainTx kv.Tx) {
 	w.chainTx = chainTx
 }
 
-func (w *StateReconWriterInc) UpdateAccountData(address libcommon.Address, original, account *accounts.Account) error {
+func (w *StateReconWriterInc) UpdateAccountData(address libcommon.Address, original, account *accounts.Account, adapter replication_adapter.Adapter) error {
 	addr := address.Bytes()
 	if ok, stateTxNum := w.as.MaxTxNumAccounts(addr); !ok || stateTxNum != w.txNum {
 		return nil
@@ -53,7 +54,7 @@ func (w *StateReconWriterInc) UpdateAccountData(address libcommon.Address, origi
 	return nil
 }
 
-func (w *StateReconWriterInc) UpdateAccountCode(address libcommon.Address, incarnation uint64, codeHash libcommon.Hash, code []byte) error {
+func (w *StateReconWriterInc) UpdateAccountCode(address libcommon.Address, incarnation uint64, codeHash libcommon.Hash, code []byte, adapter replication_adapter.Adapter) error {
 	addr, codeHashBytes := address.Bytes(), codeHash.Bytes()
 	if ok, stateTxNum := w.as.MaxTxNumCode(addr); !ok || stateTxNum != w.txNum {
 		return nil
@@ -100,7 +101,7 @@ func (w *StateReconWriterInc) DeleteAccount(address libcommon.Address, original 
 	return nil
 }
 
-func (w *StateReconWriterInc) WriteAccountStorage(address libcommon.Address, incarnation uint64, key *libcommon.Hash, original, value *uint256.Int) error {
+func (w *StateReconWriterInc) WriteAccountStorage(address libcommon.Address, incarnation uint64, key *libcommon.Hash, original, value *uint256.Int, adapter replication_adapter.Adapter) error {
 	addr, k := address.Bytes(), key.Bytes()
 	if ok, stateTxNum := w.as.MaxTxNumStorage(addr, k); !ok || stateTxNum != w.txNum {
 		return nil

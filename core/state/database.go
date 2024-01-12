@@ -18,6 +18,7 @@
 package state
 
 import (
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 	"github.com/holiman/uint256"
 	"github.com/ledgerwatch/erigon-lib/common"
 
@@ -40,10 +41,10 @@ type StateReader interface {
 }
 
 type StateWriter interface {
-	UpdateAccountData(address common.Address, original, account *accounts.Account) error
-	UpdateAccountCode(address common.Address, incarnation uint64, codeHash common.Hash, code []byte) error
+	UpdateAccountData(address common.Address, original, account *accounts.Account, adapter replication_adapter.Adapter) error
+	UpdateAccountCode(address common.Address, incarnation uint64, codeHash common.Hash, code []byte, adapter replication_adapter.Adapter) error
 	DeleteAccount(address common.Address, original *accounts.Account) error
-	WriteAccountStorage(address common.Address, incarnation uint64, key *common.Hash, original, value *uint256.Int) error
+	WriteAccountStorage(address common.Address, incarnation uint64, key *common.Hash, original, value *uint256.Int, adapter replication_adapter.Adapter) error
 	CreateContract(address common.Address) error
 }
 
@@ -62,7 +63,7 @@ func NewNoopWriter() *NoopWriter {
 	return noopWriter
 }
 
-func (nw *NoopWriter) UpdateAccountData(address common.Address, original, account *accounts.Account) error {
+func (nw *NoopWriter) UpdateAccountData(address common.Address, original, account *accounts.Account, adapter replication_adapter.Adapter) error {
 	return nil
 }
 
@@ -70,11 +71,11 @@ func (nw *NoopWriter) DeleteAccount(address common.Address, original *accounts.A
 	return nil
 }
 
-func (nw *NoopWriter) UpdateAccountCode(address common.Address, incarnation uint64, codeHash common.Hash, code []byte) error {
+func (nw *NoopWriter) UpdateAccountCode(address common.Address, incarnation uint64, codeHash common.Hash, code []byte, adapter replication_adapter.Adapter) error {
 	return nil
 }
 
-func (nw *NoopWriter) WriteAccountStorage(address common.Address, incarnation uint64, key *common.Hash, original, value *uint256.Int) error {
+func (nw *NoopWriter) WriteAccountStorage(address common.Address, incarnation uint64, key *common.Hash, original, value *uint256.Int, adapter replication_adapter.Adapter) error {
 	return nil
 }
 

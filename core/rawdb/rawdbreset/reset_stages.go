@@ -3,6 +3,7 @@ package rawdbreset
 import (
 	"context"
 	"fmt"
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 
 	"github.com/ledgerwatch/erigon-lib/chain"
 	"github.com/ledgerwatch/erigon-lib/common/datadir"
@@ -156,7 +157,8 @@ func ResetExec(ctx context.Context, db kv.RwDB, chain string, tmpDir string) (er
 		}
 		if !historyV3 {
 			genesis := core.GenesisBlockByChainName(chain)
-			if _, _, err := core.WriteGenesisState(genesis, tx, tmpDir); err != nil {
+			//TODO: check don't we need write here also
+			if _, _, err := core.WriteGenesisState(genesis, tx, tmpDir, replication_adapter.Adapter{}); err != nil {
 				return err
 			}
 		}

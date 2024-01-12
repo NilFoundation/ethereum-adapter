@@ -80,6 +80,7 @@ func TestAggregator_WinAccess(t *testing.T) {
 }
 
 func TestAggregator_Merge(t *testing.T) {
+	isAdapter := false
 	_, db, agg := testDbAndAggregator(t, 1000)
 	defer agg.Close()
 
@@ -117,8 +118,7 @@ func TestAggregator_Merge(t *testing.T) {
 		buf := EncodeAccountBytes(1, uint256.NewInt(0), nil, 0)
 		err = agg.UpdateAccountData(addr, buf)
 		require.NoError(t, err)
-
-		err = agg.WriteAccountStorage(addr, loc, []byte{addr[0], loc[0]})
+		err = agg.WriteAccountStorage(addr, loc, []byte{addr[0], loc[0]}, adapter)
 		require.NoError(t, err)
 
 		var v [8]byte

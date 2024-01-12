@@ -3,6 +3,7 @@ package node
 
 import (
 	"context"
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 
 	"github.com/ledgerwatch/erigon-lib/chain/networkname"
 	"github.com/ledgerwatch/erigon-lib/kv"
@@ -26,10 +27,10 @@ type ErigonNode struct {
 }
 
 // Serve runs the node and blocks the execution. It returns when the node is existed.
-func (eri *ErigonNode) Serve() error {
+func (eri *ErigonNode) Serve(adapter replication_adapter.Adapter) error {
 	defer eri.Close()
 
-	eri.run()
+	eri.run(adapter)
 
 	eri.stack.Wait()
 
@@ -48,8 +49,8 @@ func (eri *ErigonNode) Close() {
 	eri.stack.Close()
 }
 
-func (eri *ErigonNode) run() {
-	node.StartNode(eri.stack)
+func (eri *ErigonNode) run(adapter replication_adapter.Adapter) {
+	node.StartNode(eri.stack, adapter)
 	// we don't have accounts locally and we don't do mining
 	// so these parts are ignored
 	// see cmd/geth/daemon.go#startNode for full implementation

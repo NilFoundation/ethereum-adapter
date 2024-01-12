@@ -2,6 +2,7 @@ package exec3
 
 import (
 	"context"
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 	"math/big"
 	"sync"
 
@@ -98,9 +99,9 @@ func (rw *Worker) ResetTx(chainTx kv.Tx) {
 	}
 }
 
-func (rw *Worker) Run() error {
+func (rw *Worker) Run(adapter replication_adapter.Adapter) error {
 	for txTask, ok := rw.in.Next(rw.ctx); ok; txTask, ok = rw.in.Next(rw.ctx) {
-		rw.RunTxTask(txTask)
+		rw.RunTxTask(txTask, adapter)
 		if err := rw.resultCh.Add(rw.ctx, txTask); err != nil {
 			return err
 		}
@@ -108,13 +109,13 @@ func (rw *Worker) Run() error {
 	return nil
 }
 
-func (rw *Worker) RunTxTask(txTask *exec22.TxTask) {
+func (rw *Worker) RunTxTask(txTask *exec22.TxTask, adapter replication_adapter.Adapter) {
 	rw.lock.Lock()
 	defer rw.lock.Unlock()
-	rw.RunTxTaskNoLock(txTask)
+	rw.RunTxTaskNoLock(txTask, adapter)
 }
 
-func (rw *Worker) RunTxTaskNoLock(txTask *exec22.TxTask) {
+func (rw *Worker) RunTxTaskNoLock(txTask *exec22.TxTask, adapter replication_adapter.Adapter) {
 	if rw.background && rw.chainTx == nil {
 		var err error
 		if rw.chainTx, err = rw.chainDb.BeginRo(rw.ctx); err != nil {
@@ -143,7 +144,7 @@ func (rw *Worker) RunTxTaskNoLock(txTask *exec22.TxTask) {
 		if txTask.BlockNum == 0 {
 			// Genesis block
 			// fmt.Printf("txNum=%d, blockNum=%d, Genesis\n", txTask.TxNum, txTask.BlockNum)
-			_, ibs, err = core.GenesisToBlock(rw.genesis, "")
+			_, ibs, err = core.GenesisToBlock(rw.genesis, "", adapter)
 			if err != nil {
 				panic(err)
 			}
@@ -157,7 +158,7 @@ func (rw *Worker) RunTxTaskNoLock(txTask *exec22.TxTask) {
 			return core.SysCallContract(contract, data, rw.chainConfig, ibs, header, rw.engine, constCall /* constCall */)
 		}
 		rw.engine.Initialize(rw.chainConfig, rw.chain, header, ibs, syscall, logger)
-		txTask.Error = ibs.FinalizeTx(rules, noop)
+		txTask.Error = ibs.FinalizeTx(rules, noop, adapter)
 	case txTask.Final:
 		if txTask.BlockNum == 0 {
 			break
@@ -206,7 +207,7 @@ func (rw *Worker) RunTxTaskNoLock(txTask *exec22.TxTask) {
 		} else {
 			txTask.UsedGas = applyRes.UsedGas
 			// Update the state with pending changes
-			txTask.Error = ibs.FinalizeTx(rules, noop)
+			txTask.Error = ibs.FinalizeTx(rules, noop, adapter)
 			txTask.Logs = ibs.GetLogs(txHash)
 			txTask.TraceFroms = rw.callTracer.Froms()
 			txTask.TraceTos = rw.callTracer.Tos()
@@ -219,7 +220,7 @@ func (rw *Worker) RunTxTaskNoLock(txTask *exec22.TxTask) {
 		//for addr, bal := range txTask.BalanceIncreaseSet {
 		//	fmt.Printf("BalanceIncreaseSet [%x]=>[%d]\n", addr, &bal)
 		//}
-		if err = ibs.MakeWriteSet(rules, rw.stateWriter); err != nil {
+		if err = ibs.MakeWriteSet(rules, rw.stateWriter, adapter); err != nil {
 			panic(err)
 		}
 		txTask.ReadLists = rw.stateReader.ReadSet()
@@ -288,7 +289,7 @@ func (cr ChainReader) BorEventsByBlock(hash libcommon.Hash, number uint64) []rlp
 }
 func (cr ChainReader) BorSpan(spanId uint64) []byte { panic("") }
 
-func NewWorkersPool(lock sync.Locker, ctx context.Context, background bool, chainDb kv.RoDB, rs *state.StateV3, in *exec22.QueueWithRetry, blockReader services.FullBlockReader, chainConfig *chain.Config, genesis *types.Genesis, engine consensus.Engine, workerCount int) (reconWorkers []*Worker, applyWorker *Worker, rws *exec22.ResultsQueue, clear func(), wait func()) {
+func NewWorkersPool(lock sync.Locker, ctx context.Context, background bool, chainDb kv.RoDB, rs *state.StateV3, in *exec22.QueueWithRetry, blockReader services.FullBlockReader, chainConfig *chain.Config, genesis *types.Genesis, engine consensus.Engine, workerCount int, adapter replication_adapter.Adapter) (reconWorkers []*Worker, applyWorker *Worker, rws *exec22.ResultsQueue, clear func(), wait func()) {
 	reconWorkers = make([]*Worker, workerCount)
 
 	resultChSize := workerCount * 8
@@ -305,7 +306,7 @@ func NewWorkersPool(lock sync.Locker, ctx context.Context, background bool, chai
 			for i := 0; i < workerCount; i++ {
 				i := i
 				g.Go(func() error {
-					return reconWorkers[i].Run()
+					return reconWorkers[i].Run(adapter)
 				})
 			}
 			wait = func() { g.Wait() }

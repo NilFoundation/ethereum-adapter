@@ -1,6 +1,14 @@
 module github.com/ledgerwatch/erigon
 
-go 1.20
+go 1.21
+
+//toolchain go1.21.3
+
+require (
+	github.com/NilFoundation/replication-adapter v0.0.0-20240111203830-f0f0e783a31f
+	github.com/NilFoundation/replication-adapter-lib v0.0.0-20240110092626-c583de36f7a5
+	github.com/rs/zerolog v1.31.0
+)
 
 require (
 	github.com/erigontech/mdbx-go v0.27.21
@@ -49,7 +57,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/hashicorp/golang-lru/arc/v2 v2.0.6
 	github.com/hashicorp/golang-lru/v2 v2.0.6
-	github.com/holiman/uint256 v1.2.3
+	github.com/holiman/uint256 v1.2.4
 	github.com/huandu/xstrings v1.4.0
 	github.com/huin/goupnp v1.2.0
 	github.com/jackpal/go-nat-pmp v1.0.2

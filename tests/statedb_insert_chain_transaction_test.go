@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"fmt"
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 	"math/big"
 	"testing"
 
@@ -765,11 +766,11 @@ func genBlocks(t *testing.T, gspec *types.Genesis, txs map[int]txn) (*mock.MockS
 				}
 			}
 
-			block.AddTx(tx)
+			block.AddTx(tx, replication_adapter.Adapter{})
 		}
 
 		contractBackend.Commit()
-	})
+	}, replication_adapter.Adapter{})
 	if err != nil {
 		return nil, nil, fmt.Errorf("generate chain: %w", err)
 	}

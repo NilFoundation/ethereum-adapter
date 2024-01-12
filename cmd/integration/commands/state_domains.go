@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	replication_adapter "github.com/NilFoundation/replication-adapter"
 	"github.com/ledgerwatch/erigon-lib/metrics"
 	"path/filepath"
 	"runtime"
@@ -243,7 +244,7 @@ func (rw *ReaderWrapper4) ReadAccountIncarnation(address libcommon.Address) (uin
 	return 0, nil
 }
 
-func (ww *WriterWrapper4) UpdateAccountData(address libcommon.Address, original, account *accounts.Account) error {
+func (ww *WriterWrapper4) UpdateAccountData(address libcommon.Address, original, account *accounts.Account, adapter replication_adapter.Adapter) error {
 	value := accounts.SerialiseV3(account)
 	if err := ww.w.UpdateAccountData(address.Bytes(), value); err != nil {
 		return err
@@ -251,7 +252,7 @@ func (ww *WriterWrapper4) UpdateAccountData(address libcommon.Address, original,
 	return nil
 }
 
-func (ww *WriterWrapper4) UpdateAccountCode(address libcommon.Address, incarnation uint64, codeHash libcommon.Hash, code []byte) error {
+func (ww *WriterWrapper4) UpdateAccountCode(address libcommon.Address, incarnation uint64, codeHash libcommon.Hash, code []byte, adapter replication_adapter.Adapter) error {
 	if err := ww.w.UpdateAccountCode(address.Bytes(), code); err != nil {
 		return err
 	}
@@ -265,8 +266,8 @@ func (ww *WriterWrapper4) DeleteAccount(address libcommon.Address, original *acc
 	return nil
 }
 
-func (ww *WriterWrapper4) WriteAccountStorage(address libcommon.Address, incarnation uint64, key *libcommon.Hash, original, value *uint256.Int) error {
-	if err := ww.w.WriteAccountStorage(address.Bytes(), key.Bytes(), value.Bytes()); err != nil {
+func (ww *WriterWrapper4) WriteAccountStorage(address libcommon.Address, incarnation uint64, key *libcommon.Hash, original, value *uint256.Int, adapter replication_adapter.Adapter) error {
+	if err := ww.w.WriteAccountStorage(address.Bytes(), key.Bytes(), value.Bytes(), adapter); err != nil {
 		return err
 	}
 	return nil
