@@ -20,8 +20,8 @@
 
         replication-adapter = builtins.fetchGit {
           url = "git@github.com:NilFoundation/replication-adapter.git";
-          rev = "6db7506cb8cf0e6337a3494afcb79634962cf21f";
-          narHash = "sha256-n2kRpZxCBHIKbHyaS5QvSxUaepZgySpdkzTW/H6CR28=";
+          rev = "21f0cdd6b2d182b17120dc81cd1af01c2295badd";
+          narHash = "sha256-Ce1jr/UCZPdM8jVoJafpX54jnCO+MAEPw4UbbCeo4NM=";
         };
 
       in rec
@@ -115,7 +115,7 @@
           ];
 
           shellHook = ''
-            export GO_CFG_DIR=$HOME/.nix/go/$(basename ${self})
+            export GO_CFG_DIR=$HOME/.nix/go/$(go env GOVERSION)
 
             mkdir -p $GO_CFG_DIR/config $GO_CFG_DIR/cache $GO_CFG_DIR/pkg/mod
 
